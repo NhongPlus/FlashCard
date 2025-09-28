@@ -1,0 +1,134 @@
+.calendarHeader {
+  margin-bottom: 8px !important;
+  --dch-control-size: !important;
+}
+
+.calendarHeader button:nth-child(2) {
+  font-family: Roboto;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  text-align: center;
+  color: #212121;
+  height: 32px;
+}
+
+.calendarHeader button:nth-child(1),
+.calendarHeader button:nth-child(3) {
+  height: 32px;
+  width: 32px;
+  border-radius: 0;
+}
+
+.levelsGroup {
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.weekday {
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+}
+
+.day {
+  font-size: 16px;
+  font-family: Roboto;
+  font-weight: 400;
+  line-height: 24px;
+  width: 36px;
+  height: 54px;
+  margin: 2px;
+}
+
+.day:hover {
+  background-color: #EEA320;
+}
+
+.day:focus-visible {
+  border: 1px solid #EEA320;
+  color: #EEA320;
+  font-weight: 700;
+  outline: none;
+}
+
+.day[data-outside] {
+  color: #E0E0E0;
+}
+
+.day[data-selected="true"] {
+  background-color: #EEA320;
+  color: #6E361A;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.day:hover[data-selected="true"] {
+  background-color: #EEA320;
+  color: #6E361A;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.day[data-weekend] {
+  color: #212121;
+}
+
+.day[data-weekend]:focus-visible {
+  border: 1px solid #EEA320;
+  color: #EEA320;
+  font-weight: 700;
+  outline: none;
+}
+
+.monthCell:where([data-with-spacing]) {
+  padding: 0 !important;
+}
+
+.sectionClass[data-position="right"] {
+  margin-right: 12px;
+  justify-content: flex-end;
+}
+
+.textInput {
+  height: 44px;
+  font-family: Roboto;
+  font-size: 16px;
+  border-radius: 6px;
+  color: #212121;
+  line-height: 24px;
+  padding: 10px 12px;
+  border: 1px solid #EEEEEE;
+}
+
+.textInput.placeholder {
+  color: #757575;
+}
+
+.textInput.filled {
+  color: #000000;
+}
+
+.textInput:focus-visible {
+  border: 1px solid #EEEEEE;
+}
+
+.textInput:disabled {
+  opacity: 1;
+  background-color: #F4F4F4;
+  border: 1px solid #EEEEEE;
+}
+
+.textInputLabel {
+  font-family: Roboto;
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 4px;
+  line-height: 20px;
+  color: #757575;
+}
+
+.dropdown {
+  width: 296px !important;
+  max-width: 296px;
+}

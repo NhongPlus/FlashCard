@@ -1,0 +1,36 @@
+.text {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: normal;
+  line-height: 1.8;
+  padding: 0px 160px 10px 160px;
+}
+.text::after {
+  content: url(../../../../assets/images/iconQuotes/quotes-close.svg);
+  bottom: -1.125rem;
+  margin-left: 0.5rem;
+  position: relative;
+}
+.text::before {
+  content: url(../../../../assets/images/iconQuotes/quotes-open.svg);
+  margin-right: 0.5rem;
+}
+.box {
+  padding: 50px 0;
+  border-radius: 1.5rem;
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+  user-select: none; /* Tắt selection */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+}
+.author {
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: normal;
+  line-height: 1.5;
+  margin-top: 1rem;
+  color: #a9a9a9;
+}

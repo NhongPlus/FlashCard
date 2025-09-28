@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  background-color: #f6f7fb;
+}
+::selection {
+  background: #dbdfff;
+  color: #000; /* text màu gì khi chọn — tùy chỉnh nếu cần */
+}

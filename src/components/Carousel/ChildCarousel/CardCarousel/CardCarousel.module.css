@@ -1,0 +1,24 @@
+.text {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: normal;
+  line-height: 1.3333333333333333;
+}
+
+.box {
+  border-radius: 1.5rem;
+  overflow: hidden;
+  transition: 0.4s all ease-in-out;
+  position: relative;
+   user-select: none; /* Tắt selection */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+}
+
+.image {
+  margin-left: 60px;
+  margin-bottom: -10px;
+  /*  ảnh bị khuất đi  */
+  border-radius: 12px;
+}

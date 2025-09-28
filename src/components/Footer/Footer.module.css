@@ -1,0 +1,22 @@
+.headText {
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: normal;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+.contentText {
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: normal;
+  line-height: 1.4285714285714286;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.contentText:hover {
+  color: #5952D8;
+}
+
+.icon:hover{
+  background-color: #EDEFF4;
+}
