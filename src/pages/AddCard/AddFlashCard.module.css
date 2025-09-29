@@ -1,0 +1,26 @@
+.input {
+  border: none;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 32px;
+}
+
+.rootInput {
+  border: none;
+  background-color: #fff;
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+.button {
+  background-color: #fff !important;
+  padding: 25px;
+  border-radius: 15px;
+  margin-top: 30px;
+}
+.description {
+  color: #939bb4;
+  text-transform: uppercase;
+  font-size: 900 !important;
+  font-size: 14px !important;
+}

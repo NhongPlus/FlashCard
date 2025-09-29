@@ -15,7 +15,7 @@ import { useForm } from '@mantine/form';
 import { IconLock, IconMail } from '@tabler/icons-react';
 import classes from './Login.module.css';
 import Back from '@/assets/images/back.svg'
-import { login } from '@/services/authService';
+import { login } from '@/services/User/authService';
 export function Login() {
 
   const [error, setError] = useState<string | null>(null);

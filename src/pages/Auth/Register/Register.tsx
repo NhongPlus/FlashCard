@@ -5,7 +5,7 @@ import { IconLock, IconMail } from "@tabler/icons-react";
 import Back from '@/assets/images/back.svg'
 import style from './Register.module.css'
 import { Link, useNavigate } from "react-router-dom";
-import { register } from "@/services/authService";
+import { register } from "@/services/User/authService";
 import { useState } from "react";
 export default function Register() {
   const [loading, setLoading] = useState(false);

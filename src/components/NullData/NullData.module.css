@@ -1,0 +1,8 @@
+.text {
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: normal;
+  line-height: 1.25;
+  flex-basis: 100%;
+  word-break: break-word;
+}

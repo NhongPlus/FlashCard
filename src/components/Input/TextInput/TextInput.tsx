@@ -1,4 +1,4 @@
-import { Box, TextInput , Text} from '@mantine/core';
+import { Box, TextInput, Text } from '@mantine/core';
 import styles from './TextInput.module.css'
 
 export interface TextInputProps {
@@ -8,20 +8,25 @@ export interface TextInputProps {
   w?: string | number;
   disabled?: boolean;
   varlueImport?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onChange: (e : any) => void;
   h?: number;
   error?: string;
+  filled: boolean;
 }
-export const FormTextInput = ({ label, placeholder, disabled ,varlueImport , w, h, error, description, ...props }: TextInputProps) => {
+export const FormTextInput = ({ onChange, filled, label, placeholder, disabled, varlueImport, w, h, error, description, ...props }: TextInputProps) => {
   const isErrorInput = Boolean(error)
   return (
-    <Box style={{flex: 1}}>
+    <Box style={{ flex: 1 }}>
       <TextInput
         w={w}
+        variant={filled == true ? "filled" : 'default'}
         style={w ? { width: w } : { flex: 1 }}
         h={h}
         label={label}
         value={varlueImport}
         disabled={disabled}
+        onChange={onChange}
         placeholder={placeholder}
         {...props}
         classNames={{
@@ -31,7 +36,7 @@ export const FormTextInput = ({ label, placeholder, disabled ,varlueImport , w, 
         }}
       />
       {!isErrorInput && description && (
-        <Text size="sm"  mt={4} className={styles.textDescription}>
+        <Text size="sm" mt={4} className={styles.textDescription}>
           {description}
         </Text>
       )}

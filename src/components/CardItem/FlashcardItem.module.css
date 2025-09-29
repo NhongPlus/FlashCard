@@ -1,0 +1,25 @@
+.input {
+    border: none;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 32px;
+}
+
+.box {
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 25px;
+}
+
+.description {
+    color: #939BB4;
+    text-transform: uppercase;
+    font-size: 900 !important;
+    font-size: 14px !important;
+}
+
+.errorClass {
+    color: red !important;
+    font-size: 15px !important;
+}

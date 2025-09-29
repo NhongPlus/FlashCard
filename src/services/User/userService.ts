@@ -16,6 +16,7 @@ export interface UserData {
   imageActive?: string;   // ảnh đang dùng
   images?: string[];      // danh sách ảnh user đã từng upload
   dob?: Timestamp | null; // ngày sinh
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // cho phép thêm field khác
 }
 

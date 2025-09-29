@@ -27,7 +27,7 @@ function ModalCustom({
       closeOnEscape={false} // Không đóng khi nhấn ESC
       closeOnClickOutside={false} // Không đóng khi click ngoài
       overlayProps={{
-        backgroundOpacity: 0.7, // Tăng opacity để nhấn mạnh modal
+        backgroundOpacity: 0.9, // Tăng opacity để nhấn mạnh modal
         blur: 3,
       }}
       classNames={{

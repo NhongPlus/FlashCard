@@ -5,6 +5,8 @@ import classes from './HeaderMenu.module.css';
 import { Link } from 'react-router-dom';
 import useAuth from '@/utils/hooks/useAuth';
 import { getAuth } from 'firebase/auth';
+import useUserProfile from '@/utils/hooks/useUserProfile';
+import { logout } from '@/services/User/authService';
 
 const NAVIGATION_LINKS = {
   authenticated: [
@@ -23,10 +25,7 @@ export function HeaderMenu() {
   const [opened, { toggle }] = useDisclosure(false);
   const { user, isAuthenticated } = useAuth();
   const currentLinks = isAuthenticated ? NAVIGATION_LINKS.authenticated : NAVIGATION_LINKS.guest;
-  
-  const handleLogout = () => {
-    getAuth().signOut();
-  };
+  const { profile, loading, error } = useUserProfile();
 
   const renderNavItems = () => {
     return currentLinks.map((link) => {
@@ -68,33 +67,32 @@ export function HeaderMenu() {
       <Menu width={260} transitionProps={{ transition: 'pop-top-right' }} withinPortal>
         <Menu.Target>
           <UnstyledButton>
-            <Avatar 
-              src={user.photoURL || undefined} 
-              alt={user.displayName || 'User'} 
-              radius="xl" 
-              size={40} 
+            <Avatar
+              src={profile?.imageActive || user.photoURL}
+              radius="xl"
+              size={40}
             />
           </UnstyledButton>
         </Menu.Target>
         <Menu.Dropdown>
           <Group px={10} py={20}>
-            <Avatar src={user.photoURL || undefined} w={50} h={50} />
+            <Avatar src={profile?.imageActive || user.photoURL} w={50} h={50} />
             <Flex direction="column">
-              <Text>{user.displayName || 'User'}</Text>
-              <Text c="#586380">{user.email}</Text>
+              <Text>{profile?.displayName || 'New user'}</Text>
+              <Text c="#586380">{profile?.email}</Text>
             </Flex>
           </Group>
           <Menu.Divider />
-          <Menu.Item 
+          <Menu.Item
             leftSection={<IconSettings size={16} stroke={1.5} />}
             component={Link}
             to="/settings"
           >
             Account settings
           </Menu.Item>
-          <Menu.Item 
+          <Menu.Item
             leftSection={<IconLogout size={16} stroke={1.5} />}
-            onClick={handleLogout}
+            onClick={(async () => logout())}
           >
             Logout
           </Menu.Item>
@@ -115,7 +113,7 @@ export function HeaderMenu() {
             {renderNavItems()}
             {renderUserMenu()}
           </Group>
-          
+
           <Burger opened={opened} onClick={toggle} size="sm" hiddenFrom="sm" />
         </div>
       </Container>
