@@ -1,0 +1,17 @@
+.root {
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: normal;
+  line-height: 1.4285714285714286;
+  color: #586380;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.box {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #fff;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}

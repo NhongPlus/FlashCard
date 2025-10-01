@@ -5,6 +5,7 @@ import Login from "@/pages/Auth/Login/Login";
 import Register from "@/pages/Auth/Register/Register";
 import Mission from "@/pages/Mission/Mission";
 import SettingAcount from "@/pages/Setting/Setting";
+import Learning from "@/pages/Learning/Learning";
 
 export const protectedRoutes = [
   {
@@ -21,6 +22,11 @@ export const protectedRoutes = [
     key: "add",
     path: "/add",
     component: AddFlashCard,
+  },
+  {
+    key: "learning",
+    path: "/learning/:id",
+    component: Learning,
   },
 ];
 

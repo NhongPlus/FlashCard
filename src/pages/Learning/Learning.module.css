@@ -1,0 +1,20 @@
+.styleCard {
+  padding: 0;
+  border-radius: 20;
+  background-color: #fff;
+}
+.bottomCard{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 0;
+    gap: 1;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+};
+.card{
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 2rem 0 #282E3E1A;
+}
