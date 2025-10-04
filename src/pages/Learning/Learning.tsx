@@ -1,363 +1,281 @@
-import { getCardsInStudySet, getStudySet, updateCardMastery, type CardData, type StudySetData } from "@/services";
+// src/pages/Learning/Learning.tsx
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import '@gfazioli/mantine-flip/styles.css';
-import '@gfazioli/mantine-flip/styles.layer.css';
-import { Flip } from '@gfazioli/mantine-flip';
-import { 
-  Grid, Text, Stack, Paper, Title, Container, Flex, Switch, 
-  Progress, Button, Group, Badge, Box, ActionIcon 
-} from '@mantine/core';
+import { Container, Text, Group, Box, Title, Button, Badge, Grid, Stack, Paper } from '@mantine/core';
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { AnimatePresence, motion } from "framer-motion";
-import { IconVolume2, IconArrowLeft, IconArrowRight, IconCheck, IconX } from "@tabler/icons-react";
-import style from './Learning.module.css';
+import { IconArrowLeft, IconArrowRight, IconArrowsShuffle, IconCheck, IconX } from "@tabler/icons-react";
 
-function FrontFlashCard({ onFlip, term, height }: { onFlip: () => void; term: string; height: number }) {
-  return (
-    <Paper onClick={onFlip} style={{ cursor: 'pointer' }} withBorder h={height} shadow="md" radius="md">
-      <Flex className={style.card} h={'100%'} direction={'column'} align={'center'} justify={'space-between'} p="xl">
-        <ActionIcon variant="subtle" size="lg">
-          <IconVolume2 />
-        </ActionIcon>
-        <Title order={2} c="black" ta={'center'} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          {term}
-        </Title>
-        <Text size="sm" c="dimmed">Click để lật thẻ</Text>
-      </Flex>
-    </Paper>
-  );
-}
+// Types
+import type { LearningMode, CardData, StudySetData } from '@/@types/learning';
 
-function BackFlashCard({ onFlip, definition, height }: { onFlip: () => void; definition: string; height: number }) {
-  return (
-    <Paper onClick={onFlip} style={{ cursor: 'pointer' }} h={height} withBorder shadow="md" radius="md">
-      <Flex className={style.card} h={'100%'} direction={'column'} align={'center'} justify={'space-between'} p="xl">
-        <ActionIcon variant="subtle" size="lg">
-          <IconVolume2 />
-        </ActionIcon>
-        <Title order={2} c="black" ta={'center'} style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          {definition}
-        </Title>
-        <Text size="sm" c="dimmed">Click để lật lại</Text>
-      </Flex>
-    </Paper>
-  );
-}
+// Components
+import { FlashCard } from '@/components/FlashCard/FlashCard';
+import { ModeSelectionModal } from '@/components/ModeSection/ModeSelectionModal';
+import { CompletionModal } from '@/components/ModeSection/CompletionModal';
+import { ProgressSection } from '@/components/Progress/ProgressSection';
+import { Sidebar } from '@/components/SideBar/Sidebar';
+
+// Hooks
+import { useBasicMode } from '@/utils/hooks/useBasicMode';
+import { useStudyMode } from '@/utils/hooks/useStudyMode';
+import { useLearningData } from '@/utils/hooks/useLearningData';
+
+import '@gfazioli/mantine-flip/styles.css';
+import '@gfazioli/mantine-flip/styles.layer.css';
 
 function Learning() {
-  const [direction, setDirection] = useState<1 | -1>(1);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [cards, setCards] = useState<CardData[]>([]);
-  const [filteredCards, setFilteredCards] = useState<CardData[]>([]);
-  const [flipped, { toggle, close }] = useDisclosure(false);
-  const [index, setIndex] = useState(0);
-  const [studySet, setStudySet] = useState<StudySetData | null>(null);
-  const [studyMode, setStudyMode] = useState<boolean>(false); // false: all cards, true: only unmastered
-  const [loading, setLoading] = useState(true);
 
-  // Hotkeys
+  // ========== DATA STATES ==========
+  const { cards, setCards, studySet, loading } = useLearningData(id || '');
+  const [displayCards, setDisplayCards] = useState<CardData[]>([]);
+
+  // ========== MODE STATES ==========
+  const [mode, setMode] = useState<LearningMode>(null);
+  const [completedModalOpened, setCompletedModalOpened] = useState(false);
+
+  // ========== NAVIGATION STATES ==========
+  const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const [flipped, { toggle, close }] = useDisclosure(false);
+
+  // ========== CUSTOM HOOKS ==========
+  const basicMode = useBasicMode({
+    displayCards,
+    index,
+    setIndex,
+    setDisplayCards,
+    originalCards: cards,
+    onComplete: () => setCompletedModalOpened(true),
+    closeFlip: close
+  });
+
+  const studyMode = useStudyMode({
+    displayCards,
+    index,
+    setIndex,
+    cards,
+    setCards,
+    setDisplayCards,
+    onComplete: () => setCompletedModalOpened(true),
+    closeFlip: close
+  });
+
+  // ========== SYNC DISPLAY CARDS ==========
+  useEffect(() => {
+    if (cards.length > 0 && displayCards.length === 0) {
+      setDisplayCards(cards);
+    }
+  }, [cards, displayCards.length]);
+
+  // ========== HOTKEYS ==========
   useHotkeys([
     ['space', () => toggle()],
-    ['ArrowRight', () => nextCard()],
-    ['ArrowLeft', () => prevCard()],
+    ['ArrowRight', () => {
+      if (mode === 'study') studyMode.handleMastery(true);
+      else if (mode === 'basic') basicMode.handleNext();
+    }],
+    ['ArrowLeft', () => {
+      if (mode === 'study') studyMode.handleMastery(false);
+      else if (mode === 'basic') basicMode.handlePrev();
+    }],
   ]);
 
-  // Fetch data
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-      
-      try {
-        setLoading(true);
-        const [cardsData, studySetData] = await Promise.all([
-          getCardsInStudySet(id),
-          getStudySet(id)
-        ]);
-        
-        setCards(cardsData);
-        setStudySet(studySetData);
-        setFilteredCards(cardsData);
-      } catch (err) {
-        console.error("Lỗi khi tải dữ liệu:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [id]);
-
-  // Filter cards based on study mode
-  useEffect(() => {
-    if (studyMode) {
-      // Study mode: chỉ học những thẻ chưa mastered
-      const unmasteredCards = cards.filter(card => !card.isMastered);
-      setFilteredCards(unmasteredCards);
-      setIndex(0); // Reset về thẻ đầu
+  // ========== MODE SELECTION ==========
+  function handleModeSelect(selectedMode: LearningMode) {
+    setMode(selectedMode);
+    
+    if (selectedMode === 'study') {
+      const shuffled = [...cards].sort(() => Math.random() - 0.5);
+      setDisplayCards(shuffled);
     } else {
-      // Normal mode: học tất cả
-      setFilteredCards(cards);
+      setDisplayCards(cards);
     }
-    close(); // Đóng flip khi đổi mode
-  }, [studyMode, cards]);
-
-  // Navigation
-  function nextCard() {
+    
+    setIndex(0);
     close();
-    setDirection(1);
-    setIndex((prev) => (prev + 1) % filteredCards.length);
   }
 
-  function prevCard() {
+  function handleSelectNewMode() {
+    setMode(null);
+    setCompletedModalOpened(false);
+    setIndex(0);
+    setDisplayCards(cards);
     close();
-    setDirection(-1);
-    setIndex((prev) => (prev - 1 + filteredCards.length) % filteredCards.length);
   }
 
-  // Mark card as mastered/unmastered
-  async function markCardMastery(mastered: boolean) {
-    const currentCard = filteredCards[index];
-    if (!currentCard) return;
-
-    try {
-      await updateCardMastery(currentCard.id, mastered);
-      
-      // Update local state
-      setCards(prevCards => 
-        prevCards.map(card => 
-          card.id === currentCard.id ? { ...card, isMastered: mastered } : card
-        )
-      );
-
-      // Auto next card khi đánh dấu trong study mode
-      if (studyMode && mastered) {
-        setTimeout(() => nextCard(), 500);
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
-    }
-  }
-
-  // Calculate progress
+  // ========== CALCULATIONS ==========
+  const totalCards = displayCards.length;
   const masteredCount = cards.filter(c => c.isMastered).length;
-  const totalCount = cards.length;
-  const progressPercentage = totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 0;
+  const basicProgress = basicMode.viewedCardIds.size;
+  const basicProgressPercent = totalCards > 0 ? (basicProgress / totalCards) * 100 : 0;
+  const studyProgressPercent = totalCards > 0 ? (studyMode.reviewedCount / totalCards) * 100 : 0;
+  const currentCard = displayCards[index];
 
+  // ========== LOADING STATE ==========
   if (loading) {
-    return <Container><Text>Đang tải...</Text></Container>;
+    return <Container><Text size="lg" ta="center" mt="xl">Đang tải...</Text></Container>;
   }
 
-  if (filteredCards.length === 0) {
+  // ========== EMPTY STATE ==========
+  if (cards.length === 0) {
     return (
       <Container size="sm" mt="xl">
         <Paper p="xl" withBorder>
           <Stack align="center">
-            <Title order={3}>
-              {studyMode ? "Bạn đã học xong tất cả thẻ!" : "Chưa có thẻ nào"}
-            </Title>
-            <Text c="dimmed">
-              {studyMode 
-                ? "Chuyển về chế độ học thông thường để xem lại tất cả thẻ"
-                : "Thêm thẻ mới để bắt đầu học"
-              }
-            </Text>
-            <Group>
-              {studyMode && (
-                <Button onClick={() => setStudyMode(false)}>
-                  Học tất cả thẻ
-                </Button>
-              )}
-              <Button variant="outline" onClick={() => navigate(-1)}>
-                Quay lại
-              </Button>
-            </Group>
+            <Title order={3}>Chưa có thẻ nào</Title>
+            <Text c="dimmed">Thêm thẻ mới để bắt đầu học</Text>
+            <Button variant="outline" onClick={() => navigate(-1)}>Quay lại</Button>
           </Stack>
         </Paper>
       </Container>
     );
   }
 
-  const currentCard = filteredCards[index];
-
+  // ========== MAIN RENDER ==========
   return (
-    <div style={{ backgroundColor: '#F6F7FB', minHeight: '100vh', padding: '20px' }}>
+    <div style={{ backgroundColor: "#F6F7FB", minHeight: "100vh", padding: 20 }}>
       <Container size="xl">
+        {/* Mode Selection Modal */}
+        <ModeSelectionModal opened={mode === null} onSelect={handleModeSelect} />
+
+        {/* Completion Modal */}
+        <CompletionModal
+          opened={completedModalOpened}
+          onClose={() => setCompletedModalOpened(false)}
+          mode={mode}
+          totalCards={cards.length}
+          masteredCount={masteredCount}
+          onReset={studyMode.handleReset}
+          onContinue={studyMode.handleContinue}
+          onSelectMode={handleSelectNewMode}
+          onBackHome={() => navigate(-1)}
+        />
+
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Box>
-            <Title order={2}>{studySet?.title || 'Học thẻ'}</Title>
-            <Text size="sm" c="dimmed">
-              {studySet?.description}
-            </Text>
+            <Title order={2}>{studySet?.title || "Học thẻ"}</Title>
+            <Text size="sm" c="dimmed">{studySet?.description}</Text>
           </Box>
-          <Button variant="subtle" onClick={() => navigate(-1)}>
-            Quay lại
-          </Button>
+          <Group>
+            {mode === 'basic' && (
+              <Button
+                variant={basicMode.isShuffled ? "filled" : "light"}
+                leftSection={<IconArrowsShuffle size={16} />}
+                onClick={basicMode.handleShuffle}
+              >
+                {basicMode.isShuffled ? "Bỏ Shuffle" : "Shuffle"}
+              </Button>
+            )}
+            <Badge color={mode === 'study' ? 'red' : 'blue'} size="lg">
+              {mode === 'study' ? '🎯 Study Mode' : '📖 Basic Mode'}
+            </Badge>
+            <Button variant="subtle" onClick={() => navigate(-1)}>Quay lại</Button>
+          </Group>
         </Group>
 
         <Grid>
-          <Grid.Col span={9}>
-            {/* Card counter */}
+          <Grid.Col span={{ base: 12, md: 9 }}>
+            {/* Card Counter */}
             <Group justify="space-between" mb="md">
-              <Text size="lg" fw={500}>
-                {index + 1} / {filteredCards.length}
-              </Text>
-              <Group>
-                <Switch
-                  checked={studyMode}
-                  onChange={(e) => setStudyMode(e.currentTarget.checked)}
-                  label="Chế độ ghi nhớ"
-                  labelPosition="left"
-                />
-              </Group>
+              <Text size="lg" fw={500}>Thẻ {index + 1} / {totalCards}</Text>
+              {basicMode.isShuffled && <Badge color="grape" variant="light">Đã shuffle</Badge>}
             </Group>
 
             {/* Flashcard */}
             <Box style={{ width: "100%", height: 400, position: "relative" }} mb="md">
-              <AnimatePresence mode="wait" initial={false}>
+              <AnimatePresence mode="wait">
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, x: 60 * direction }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2 }}
-                  style={{
-                    position: "absolute",
-                    width: "100%",
-                    height: "100%",
-                  }}
+                  style={{ position: "absolute", width: "100%", height: "100%" }}
                 >
-                  <Flip
-                    h={400}
-                    w="100%"
+                  <FlashCard
+                    term={currentCard.front}
+                    definition={currentCard.back}
+                    height={400}
                     flipped={flipped}
-                    direction="vertical"
-                    duration={0.4}
-                  >
-                    <FrontFlashCard
-                      onFlip={toggle}
-                      term={currentCard.front}
-                      height={400}
-                    />
-                    <BackFlashCard
-                      onFlip={toggle}
-                      definition={currentCard.back}
-                      height={400}
-                    />
-                  </Flip>
+                    onFlip={toggle}
+                  />
                 </motion.div>
               </AnimatePresence>
             </Box>
 
             {/* Controls */}
             <Stack gap="md">
-              {/* Navigation */}
-              <Group justify="center">
-                <Button
-                  variant="light"
-                  leftSection={<IconArrowLeft size={16} />}
-                  onClick={prevCard}
-                  disabled={filteredCards.length <= 1}
-                >
-                  Trước
-                </Button>
-                <Button
-                  variant="light"
-                  rightSection={<IconArrowRight size={16} />}
-                  onClick={nextCard}
-                  disabled={filteredCards.length <= 1}
-                >
-                  Sau
-                </Button>
-              </Group>
-
-              {/* Mastery buttons (chỉ hiện khi flipped) */}
-              {flipped && (
-                <Group justify="center">
+              {mode === 'basic' ? (
+                <Group justify="center" gap="md">
                   <Button
-                    color="red"
+                    size="lg"
                     variant="light"
-                    leftSection={<IconX size={16} />}
-                    onClick={() => markCardMastery(false)}
+                    leftSection={<IconArrowLeft size={20} />}
+                    onClick={basicMode.handlePrev}
+                    disabled={!basicMode.canGoPrev}
+                    style={{ minWidth: 150 }}
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="light"
+                    rightSection={<IconArrowRight size={20} />}
+                    onClick={basicMode.handleNext}
+                    disabled={!basicMode.canGoNext}
+                    style={{ minWidth: 150 }}
+                  >
+                    Sau
+                  </Button>
+                </Group>
+              ) : (
+                <Group justify="center" gap="xl">
+                  <Button
+                    size="lg"
+                    color="red"
+                    variant="filled"
+                    leftSection={<IconX size={20} />}
+                    onClick={() => studyMode.handleMastery(false)}
+                    style={{ minWidth: 180 }}
                   >
                     Chưa thuộc
                   </Button>
                   <Button
+                    size="lg"
                     color="green"
-                    variant="light"
-                    leftSection={<IconCheck size={16} />}
-                    onClick={() => markCardMastery(true)}
+                    variant="filled"
+                    leftSection={<IconCheck size={20} />}
+                    onClick={() => studyMode.handleMastery(true)}
+                    style={{ minWidth: 180 }}
                   >
                     Đã thuộc
                   </Button>
                 </Group>
               )}
 
-              {/* Progress bar */}
-              <Box>
-                <Group justify="space-between" mb={4}>
-                  <Text size="sm" c="dimmed">Tiến độ học tập</Text>
-                  <Text size="sm" fw={500}>{progressPercentage}%</Text>
-                </Group>
-                <Progress 
-                  value={progressPercentage} 
-                  striped 
-                  animated={progressPercentage < 100}
-                  color={progressPercentage === 100 ? 'green' : 'blue'}
-                />
-              </Box>
+              <ProgressSection
+                mode={mode}
+                current={mode === 'study' ? studyMode.reviewedCount : basicProgress}
+                total={totalCards}
+                percentage={mode === 'study' ? studyProgressPercent : basicProgressPercent}
+              />
             </Stack>
           </Grid.Col>
 
           {/* Sidebar */}
-          <Grid.Col span={3}>
-            <Paper p="md" withBorder>
-              <Stack gap="md">
-                <Text fw={600} size="lg">Thuật ngữ trong học phần</Text>
-                
-                <Box>
-                  <Group justify="space-between" mb={4}>
-                    <Text size="sm" c="orange">Đang học</Text>
-                    <Badge color="orange" variant="light">
-                      {totalCount - masteredCount}
-                    </Badge>
-                  </Group>
-                  <Progress 
-                    value={totalCount > 0 ? ((totalCount - masteredCount) / totalCount) * 100 : 0} 
-                    color="orange" 
-                    size="sm"
-                  />
-                </Box>
-
-                <Box>
-                  <Group justify="space-between" mb={4}>
-                    <Text size="sm" c="green">Đã thuộc</Text>
-                    <Badge color="green" variant="light">
-                      {masteredCount}
-                    </Badge>
-                  </Group>
-                  <Progress 
-                    value={progressPercentage} 
-                    color="green" 
-                    size="sm"
-                  />
-                </Box>
-
-                <Box mt="md">
-                  <Text size="sm" c="dimmed" mb="xs">Phím tắt:</Text>
-                  <Stack gap={4}>
-                    <Text size="xs" c="dimmed">Space - Lật thẻ</Text>
-                    <Text size="xs" c="dimmed">← → - Chuyển thẻ</Text>
-                  </Stack>
-                </Box>
-
-                {currentCard.isMastered && (
-                  <Badge color="green" variant="filled" size="lg" fullWidth>
-                    Thẻ này đã thuộc
-                  </Badge>
-                )}
-              </Stack>
-            </Paper>
+          <Grid.Col span={{ base: 12, md: 3 }}>
+            <Sidebar
+              mode={mode}
+              totalCards={cards.length}
+              masteredCount={masteredCount}
+              basicProgress={basicProgress}
+              currentCardViewed={basicMode.viewedCardIds.has(currentCard.id)}
+              currentCardMastered={currentCard.isMastered}
+            />
           </Grid.Col>
         </Grid>
       </Container>

@@ -78,6 +78,24 @@ export async function updateCard(cardId: string, data: Partial<Omit<CardData, 'i
 }
 
 /**
+ * UPDATE - Cập nhật trạng thái mastered của một card (giống Quizlet)
+ * @param cardId - ID của card cần cập nhật
+ * @param isMastered - true nếu đã thuộc, false nếu chưa thuộc
+ */
+export async function updateCardMastery(cardId: string, isMastered: boolean): Promise<void> {
+  try {
+    const cardRef = doc(db, "cards", cardId);
+    await updateDoc(cardRef, { 
+      isMastered: isMastered,
+      lastReviewed: new Date().toISOString() // Thêm timestamp khi review
+    });
+  } catch (error) {
+    console.error("Error updating card mastery:", error);
+    throw new Error("Không thể cập nhật trạng thái thẻ");
+  }
+}
+
+/**
  * DELETE - Xóa một card và cập nhật cardCount
  * Sử dụng Transaction để đảm bảo tính toàn vẹn.
  */
