@@ -1,38 +1,45 @@
-import { useState, useEffect } from 'react'
 import ModalCustom from './components/ModalCustom/ModalCustom';
 import image from '@/assets/images/mind.png'
-import { useNavigate } from 'react-router-dom';
 import useUserProfile from './utils/hooks/useUserProfile';
 import LoadingScreen from './components/Layout/LoadingScreen/LoadingScreen';
 import useAuth from './utils/hooks/useAuth';
 import NullData from './components/NullData/NullData';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from './config/firebase';
-import { Box, ThemeIcon, Text, Stack, Group, Container, SimpleGrid } from '@mantine/core';
-import { IconBook2, IconFileDescriptionFilled } from '@tabler/icons-react';
 import style from './App.module.css'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { Box, ThemeIcon, Text, Group, Container, SimpleGrid, Modal, Center, Loader, ScrollArea, Flex } from '@mantine/core';
+import { IconBook2, IconFileDescriptionFilled } from '@tabler/icons-react';
+import type { StudySetData } from './@types/learning';
+import type { Folder } from './@types/folder';
+import { useStudySets } from '@/utils/hooks/useStudySet';
+import { useFolders } from './utils/hooks/useFolder';
+import { useDisclosure } from '@mantine/hooks';
+import { getStudySetsInFolder } from './services/Folder/folderService';
+
 const text = `Lần đầu đăng kí?\nĐến trang cài đặt để thêm thông tin cá nhân`;
 
-interface StudySet {
-  id: string;
-  title: string;
-  description?: string;
-  cardCount: number;
-  [key: string]: any;
-}
 
 function App() {
   const { user } = useAuth();
-  const { profile, loading, isProfileComplete } = useUserProfile();
-
-  const [modalOpened, setModalOpened] = useState(false);
-  const [studySets, setStudySets] = useState<StudySet[]>([]);
-  const [loadingStudySets, setLoadingStudySets] = useState(true);
   const navigate = useNavigate();
+  const { profile, loading: loadingProfile, isProfileComplete } = useUserProfile();
+
+  // States & Hooks cho Modal
+  const [opened, { open, close }] = useDisclosure(false);
+  const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
+  const [studySetsInModal, setStudySetsInModal] = useState<StudySetData[]>([]);
+  const [loadingModalContent, setLoadingModalContent] = useState(false);
+
+  // State cho modal cảnh báo
+  const [modalOpened, setModalOpened] = useState(false);
+
+  // ✅ TỐI ƯU: Chỉ lấy các học phần chưa được phân loại để hiển thị ở trang chính
+  const { studySets: unclassifiedStudySets, loading: loadingStudySets } = useStudySets(user?.uid);
+  const { folders, loading: loadingFolders } = useFolders(user?.uid);
 
   // ✅ Check profile completeness
   useEffect(() => {
-    if (!loading) {
+    if (!loadingProfile) {
       if (profile && !isProfileComplete) {
         setModalOpened(true);
       } else if (!profile) {
@@ -41,51 +48,39 @@ function App() {
         setModalOpened(false);
       }
     }
-  }, [loading, profile, isProfileComplete]);
+  }, [loadingProfile, profile, isProfileComplete]);
 
-  // ✅ Fetch study sets CỦA USER HIỆN TẠI
+  // Call studySet in folder 
   useEffect(() => {
-    async function getUserStudySets() {
-      if (!user?.uid) {
-        setLoadingStudySets(false);
-        return;
-      }
-
-      try {
-        setLoadingStudySets(true);
-
-        // ✅ Query chỉ lấy study sets của user hiện tại
-        const q = query(
-          collection(db, "studySets"),
-          where("userId", "==", user.uid)
-        );
-
-        const querySnapshot = await getDocs(q);
-
-        // ✅ Lưu vào state
-        const studySetsData: StudySet[] = [];
-        querySnapshot.forEach((doc) => {
-          studySetsData.push({
-            id: doc.id,
-            ...doc.data()
-          } as StudySet);
-        });
-
-        setStudySets(studySetsData);
-        console.log(`Đã tải ${studySetsData.length} study sets:`, studySetsData);
-
-      } catch (error) {
-        console.error("Lỗi khi lấy study sets:", error);
-      } finally {
-        setLoadingStudySets(false);
-      }
+    if (selectedFolder && opened && user?.uid) {
+      const fetchSets = async () => {
+        setLoadingModalContent(true);
+        try {
+          const sets = await getStudySetsInFolder(user.uid, selectedFolder.id);
+          setStudySetsInModal(sets);
+        } catch (error) {
+          console.error("Lỗi khi tải học phần trong thư mục:", error);
+        } finally {
+          setLoadingModalContent(false);
+        }
+      };
+      fetchSets();
     }
-
-    getUserStudySets();
-  }, [user?.uid]); // ✅ Chỉ chạy khi user.uid thay đổi
-
+  }, [selectedFolder, opened, user?.uid]);
+  console.log(folders);
+  const handleCloseModal = () => {
+    close();
+    // Reset state khi đóng modal để lần sau mở lại không bị hiển thị dữ liệu cũ
+    setSelectedFolder(null);
+    setStudySetsInModal([]);
+  }
+  const handleFolderClick = (folder: Folder) => {
+    setSelectedFolder(folder);
+    open();
+  };
+  console.log(studySetsInModal);
   // Loading state
-  if (loading || loadingStudySets) {
+  if (loadingFolders || loadingStudySets) {
     return <LoadingScreen />;
   }
   return (
@@ -103,19 +98,18 @@ function App() {
         />
       )}
 
-      {/* Hiển thị study sets */}
-      {studySets.length === 0 ? (
+      {unclassifiedStudySets.length === 0 ? (
         <NullData />
       ) : (
         <div style={{ backgroundColor: '#F6F7FB' }}>
           <Container size={'lg'}>
             <Text fz={30} fw={700} py={30}>Học phần của bạn </Text>
             <SimpleGrid
-              cols={{ base: 1, sm: 2 }} // Hiển thị 1 cột trên màn hình nhỏ, 2 cột trên màn hình lớn hơn
+              cols={{ base: 1, sm: 2 }}
               spacing="xl"
               pb={'60px'}
             >
-              {studySets.map((studySet) => (
+              {unclassifiedStudySets.map((studySet: StudySetData) => (
                 <Box
                   key={studySet.id}
                   p="md"
@@ -124,19 +118,14 @@ function App() {
                 >
                   <Group>
                     <ThemeIcon variant="light" radius="md" size="xl" color="#008EC4">
-                      {studySet.folderId == null
-                        ?
-                        (<IconFileDescriptionFilled style={{ width: '70%', height: '70%' }} />)
-                        :
-                        (<IconBook2 style={{ width: '70%', height: '70%' }} />)
-                      }
+                      <IconFileDescriptionFilled style={{ width: '70%', height: '70%' }} />
                     </ThemeIcon>
 
                     <Box style={{ flex: 1 }}>
                       <Text fw={600}>{studySet.title}</Text>
                       <Group gap={7}>
                         <Text size="sm" c="gray" className={style.root}>
-                          {studySet.folderId == null ? 'Học phần' : 'Thư mục'}
+                          Học phần
                         </Text>
                         •
                         <Text size="sm" c="dimmed" className={style.root}>
@@ -151,10 +140,79 @@ function App() {
                   </Group>
                 </Box>
               ))}
+              {folders.map((folder: Folder) => (
+                <Box
+                  key={folder.id}
+                  p="md"
+                  className={style.box}
+                  onClick={() => handleFolderClick(folder)}
+                >
+                  <Group>
+                    <ThemeIcon variant="light" radius="md" size="xl" color="#008EC4">
+                      <IconBook2 style={{ width: '70%', height: '70%' }} />
+                    </ThemeIcon>
+                    <Box style={{ flex: 1 }}>
+                      <Text fw={600}>{folder.name}</Text>
+                      <Group gap={7}>
+                        <Text size="sm" c="gray" className={style.root}>
+                          Thư mục
+                        </Text>
+                        •
+                        <Text size="sm" c="dimmed" className={style.root}>
+                          Tác giả : {profile?.displayName}
+                        </Text>
+                      </Group>
+                    </Box>
+                  </Group>
+                </Box>
+              ))}
             </SimpleGrid>
           </Container>
         </div>
       )}
+
+      {/* đây là phần mở modal của folder  */}
+      <Modal opened={opened} onClose={handleCloseModal} title={`Học phần trong: ${selectedFolder?.name || ''}`} centered size="lg">
+        <ScrollArea h={250} type="never" offsetScrollbars>
+          <Flex gap={5} direction={'column'} bg='#fff'>
+            {loadingModalContent ? (
+              <Center p="xl"><Loader /></Center>
+            ) : (
+              studySetsInModal.length > 0 ? (
+                studySetsInModal.map(studySet => (
+                  <Box
+                    key={studySet.id}
+                    p="md"
+                    className={style.box}
+                    onClick={() => navigate(`/learning/${studySet.id}`)}
+                  >
+                    <Group>
+                      <ThemeIcon variant="light" radius="md" size="xl" color="#008EC4">
+                        <IconFileDescriptionFilled style={{ width: '70%', height: '70%' }} />
+                      </ThemeIcon>
+
+                      <Box style={{ flex: 1 }}>
+                        <Text fw={600}>{studySet.title}</Text>
+                        <Group gap={7}>
+                          <Text size="sm" c="gray" className={style.root}>
+                            Học phần
+                          </Text>
+                          •
+                          <Text size="sm" c="dimmed" className={style.root}>
+                            Tác giả : {profile?.displayName}
+                          </Text>
+                        </Group>
+                      </Box>
+                    </Group>
+                  </Box>
+                ))
+              ) : (
+                <Text c="dimmed" ta="center" p="xl">Thư mục này chưa có học phần nào.</Text>
+              )
+            )}
+          </Flex>
+        </ScrollArea>
+      </Modal>
     </>
   );
 }

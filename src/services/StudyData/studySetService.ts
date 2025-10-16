@@ -1,17 +1,15 @@
-// src/services/studySetService.ts
 import {
   collection,
   doc,
   getDoc,
-  getDocs,
   updateDoc,
   deleteDoc,
-  query,
-  where,
   addDoc,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
+import type { CardData } from "./cardService";
 
 // Interface của bạn
 export interface StudySetData {
@@ -52,19 +50,9 @@ export async function getStudySet(studySetId: string): Promise<StudySetData | nu
   }
 }
 
-// READ - Lấy tất cả study sets trong một folder
-export async function getStudySetsInFolder(folderId: string): Promise<StudySetData[]> {
-  try {
-    const q = query(collection(db, "studySets"), where("folderId", "==", folderId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StudySetData));
-  } catch (error) {
-    console.error("Error getting study sets in folder:", error);
-    throw new Error("Không thể tải danh sách học phần");
-  }
-}
 
-// UPDATE - Cập nhật thông tin của study set
+// Omit<T, K> là một Utility Type của TypeScript. 
+// Nó tạo ra một kiểu mới bằng cách lấy kiểu T và loại bỏ đi các thuộc tính K
 export async function updateStudySet(studySetId: string, data: Partial<Omit<StudySetData, 'id' | 'userId'>>): Promise<void> {
   try {
     await updateDoc(doc(db, "studySets", studySetId), data);
@@ -79,17 +67,7 @@ export async function updateStudySet(studySetId: string, data: Partial<Omit<Stud
  * @param studySetId ID của học phần cần di chuyển
  * @param folderId ID của thư mục mới, hoặc null để đưa ra ngoài
  */
-export async function moveStudySetToFolder(studySetId: string, folderId: string | null): Promise<void> {
-  try {
-    await updateDoc(doc(db, "studySets", studySetId), { folderId: folderId });
-  } catch (error) {
-    console.error("Error moving study set:", error);
-    throw new Error("Không thể di chuyển học phần");
-  }
-}
 
-// DELETE - Chỉ xóa document study set (không xóa card)
-// Thường được gọi bởi compositeService
 export async function deleteStudySet(studySetId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, "studySets", studySetId));
@@ -97,4 +75,43 @@ export async function deleteStudySet(studySetId: string): Promise<void> {
     console.error("Error deleting study set document:", error);
     throw new Error("Không thể xóa document học phần");
   }
+}
+
+
+/**
+ * Cập nhật thông tin của một bộ thẻ và các thẻ của nó một cách tối ưu.
+ * @param studySetId - ID của bộ thẻ cần cập nhật.
+ * @param studySetUpdateData - Dữ liệu mới cho bộ thẻ.
+ * @param cardsToCreate - Các thẻ mới cần tạo.
+ * @param cardsToUpdate - Các thẻ cần cập nhật.
+ * @param cardIdsToDelete - ID của các thẻ cần xóa.
+ */
+export async function updateStudySetWithCards(
+    studySetId: string,
+    studySetUpdateData: Partial<StudySetData>,
+    cardsToCreate: Omit<CardData, 'id' | 'studySetId'>[],
+    cardsToUpdate: { id: string, data: Partial<CardData> }[],
+    cardIdsToDelete: string[]
+) {
+    const batch = writeBatch(db);
+
+    const studySetRef = doc(db, 'studySets', studySetId);
+    batch.update(studySetRef, studySetUpdateData);
+
+    cardsToCreate.forEach(cardData => {
+        const cardRef = doc(collection(db, `studySets/${studySetId}/cards`));
+        batch.set(cardRef, cardData);
+    });
+
+    cardsToUpdate.forEach(cardUpdate => {
+        const cardRef = doc(db, `studySets/${studySetId}/cards`, cardUpdate.id);
+        batch.update(cardRef, cardUpdate.data);
+    });
+
+    cardIdsToDelete.forEach(cardId => {
+        const cardRef = doc(db, `studySets/${studySetId}/cards`, cardId);
+        batch.delete(cardRef);
+    });
+
+    await batch.commit();
 }

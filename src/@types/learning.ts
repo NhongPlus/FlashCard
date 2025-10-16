@@ -1,6 +1,4 @@
-// src/pages/Learning/types.ts
-
-export type LearningMode = 'basic' | 'study' | null;
+export type LearningMode = "basic" | "study" | null;
 
 export interface CardData {
   id: string;
@@ -26,6 +24,7 @@ export interface BasicModeState {
   handleNext: () => void;
   handlePrev: () => void;
   handleShuffle: () => void;
+  handleRestart: () => void; // ✅ THÊM
   canGoNext: boolean;
   canGoPrev: boolean;
 }
@@ -33,6 +32,7 @@ export interface BasicModeState {
 export interface StudyModeState {
   reviewedCount: number;
   handleMastery: (mastered: boolean) => Promise<void>;
-  handleReset: () => Promise<void>;
-  handleContinue: () => void;
+  handleReset: (onResetComplete?: () => void) => Promise<void>;
+  handleContinue: (onContinueComplete?: () => void) => void; // ✅ SỬA
+  resetReviewedCount: () => void;
 }

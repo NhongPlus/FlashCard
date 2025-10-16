@@ -14,7 +14,7 @@ const NAVIGATION_LINKS = {
       label: 'Add',
       links: [
         { link: '/folder', label: 'Folder' },
-        { link: '/add', label: 'Add Card' },
+        { link: '/add-set', label: 'Add Card' },
       ],
     }
   ],

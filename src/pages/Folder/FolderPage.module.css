@@ -1,0 +1,88 @@
+/* src/pages/Folder/FolderPage.module.css */
+
+.container {
+  background-color: #F6F7FB;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.dragArea {
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  min-height: 200px;
+}
+
+.dragAreaActive {
+  background-color: #e3f2fd;
+  border: 2px dashed #1976d2;
+}
+
+.studySetCard {
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.studySetCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.studySetCard:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.8;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.folderCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-left: 4px solid #FFA500;
+}
+
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  color: #868e96;
+  font-size: 14px;
+}
+
+.dropHint {
+  background-color: #fff3e0;
+  border: 2px dashed #ff9800;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  color: #f57c00;
+}
+
+.folderHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.folderIcon {
+  font-size: 28px;
+  color: #FFA500;
+}
+
+.badge {
+  background-color: #4c6ef5;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.actionButton {
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  transform: scale(1.1);
+}

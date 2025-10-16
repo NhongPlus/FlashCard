@@ -32,13 +32,13 @@ const uploadToCloudinary = async (file: File): Promise<string> => {
         body: formData,
       }
     );
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Cloudinary error:', errorData);
       throw new Error('Upload failed');
     }
-    
+
     const data = await response.json();
     return data.secure_url;
   } catch (error) {
@@ -55,11 +55,11 @@ function SettingAccount() {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-      
+
       try {
         const ref = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
-        
+
         if (snap.exists()) {
           setProfile(snap.data() as UserData);
         } else {
@@ -71,7 +71,7 @@ function SettingAccount() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [user]);
 
@@ -139,7 +139,7 @@ function CreateProfileForm({ user }: { user: any }) {
       }
 
       form.setFieldValue('imageFile', file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -162,7 +162,7 @@ function CreateProfileForm({ user }: { user: any }) {
         setUploading(true);
         try {
           imageUrl = await uploadToCloudinary(values.imageFile);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           setMessage({ type: 'error', text: 'Không thể upload ảnh. Vui lòng thử lại.' });
           return;
@@ -194,7 +194,7 @@ function CreateProfileForm({ user }: { user: any }) {
           return;
         }
       }
-      
+
       await createUserDoc(user.uid, {
         displayName: values.displayName.trim(),
         email: user.email || "",
@@ -205,7 +205,7 @@ function CreateProfileForm({ user }: { user: any }) {
       });
 
       setMessage({ type: 'success', text: 'Tạo profile thành công!' });
-      
+
       // Navigate về dashboard sau 1.5s
       setTimeout(() => {
         navigate('/dashboard');
@@ -222,9 +222,9 @@ function CreateProfileForm({ user }: { user: any }) {
   return (
     <Paper shadow="xs" p="xl">
       <Text size="lg" fw={600} mb="md">Tạo thông tin cá nhân</Text>
-      
+
       {message && (
-        <Alert 
+        <Alert
           icon={message.type === 'success' ? <IconCheck size={16} /> : <IconX size={16} />}
           color={message.type === 'success' ? 'green' : 'red'}
           mb="md"
@@ -239,20 +239,20 @@ function CreateProfileForm({ user }: { user: any }) {
           <div>
             <Text size="sm" fw={500} mb={8}>Ảnh đại diện</Text>
             <Group gap="md" align="center">
-              <Avatar 
-                src={form.values.imagePreview} 
-                size={80} 
+              <Avatar
+                src={form.values.imagePreview}
+                size={80}
                 radius="md"
                 alt="Avatar preview"
               />
-              <FileButton 
-                onChange={handleFileSelect} 
+              <FileButton
+                onChange={handleFileSelect}
                 accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
                 disabled={uploading || submitLoading}
               >
                 {(props) => (
-                  <Button 
-                    {...props} 
+                  <Button
+                    {...props}
                     leftSection={<IconUpload size={16} />}
                     variant="outline"
                     loading={uploading}
@@ -269,10 +269,10 @@ function CreateProfileForm({ user }: { user: any }) {
 
           {/* Tên */}
           <FormTextInput
+            filled={false}
             label="Tên hiển thị"
             placeholder="Nhập tên của bạn"
-            {...form.getInputProps("displayName")}
-          />
+            {...form.getInputProps("displayName")} />
 
           {/* Ngày sinh */}
           <SingleDate
@@ -284,9 +284,9 @@ function CreateProfileForm({ user }: { user: any }) {
           />
 
           {/* Submit button */}
-          <Button 
-            type="submit" 
-            size="md" 
+          <Button
+            type="submit"
+            size="md"
             loading={submitLoading || uploading}
             disabled={uploading}
           >
@@ -312,7 +312,7 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
       // Kiểm tra nếu có method toDate (Timestamp)
       if (profile.dob && typeof profile.dob === 'object' && 'toDate' in profile.dob) {
         profileDob = (profile.dob as Timestamp).toDate();
-      } 
+      }
       // Kiểm tra nếu là Date object
       else if (profile.dob && typeof profile.dob === 'object' && 'getTime' in profile.dob) {
         profileDob = profile.dob as Date;
@@ -355,7 +355,7 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
       }
 
       form.setFieldValue('imageFile', file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -422,7 +422,7 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
           return;
         }
       }
-      
+
       const updatedData: Partial<UserData> = {
         displayName: values.displayName.trim(),
         dob: dobTimestamp,
@@ -456,7 +456,7 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
       <Text size="lg" fw={600} mb="md">Chỉnh sửa thông tin cá nhân</Text>
 
       {message && (
-        <Alert 
+        <Alert
           icon={message.type === 'success' ? <IconCheck size={16} /> : <IconX size={16} />}
           color={message.type === 'success' ? 'green' : 'red'}
           mb="md"
@@ -471,21 +471,21 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
           <div>
             <Text size="sm" fw={500} mb={8}>Ảnh đại diện hiện tại</Text>
             <Group gap="md" align="center">
-              <Avatar 
-                src={form.values.imagePreview} 
-                size={80} 
+              <Avatar
+                src={form.values.imagePreview}
+                size={80}
                 radius="md"
                 alt="Current avatar"
               />
               <div>
-                <FileButton 
-                  onChange={handleFileSelect} 
+                <FileButton
+                  onChange={handleFileSelect}
                   accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
                   disabled={uploading || submitLoading}
                 >
                   {(props) => (
-                    <Button 
-                      {...props} 
+                    <Button
+                      {...props}
                       leftSection={<IconUpload size={16} />}
                       variant="outline"
                       size="sm"
@@ -538,10 +538,10 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
 
           {/* Tên */}
           <FormTextInput
+            filled={false} 
             label="Tên hiển thị"
             placeholder="Nhập tên của bạn"
-            {...form.getInputProps("displayName")}
-          />
+            {...form.getInputProps("displayName")}          />
 
           {/* Ngày sinh */}
           <SingleDate
@@ -561,9 +561,9 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
           />
 
           {/* Submit button */}
-          <Button 
-            type="submit" 
-            size="md" 
+          <Button
+            type="submit"
+            size="md"
             loading={submitLoading || uploading}
             disabled={uploading}
           >

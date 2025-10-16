@@ -6,6 +6,7 @@ import Register from "@/pages/Auth/Register/Register";
 import Mission from "@/pages/Mission/Mission";
 import SettingAcount from "@/pages/Setting/Setting";
 import Learning from "@/pages/Learning/Learning";
+import FolderPage from "@/pages/Folder/FolderPage";
 
 export const protectedRoutes = [
   {
@@ -19,14 +20,24 @@ export const protectedRoutes = [
     component: SettingAcount,
   },
   {
-    key: "add",
-    path: "/add",
+    key: "add-set", 
+    path: "/add-set", 
+    component: AddFlashCard,
+  },
+  {
+    key: "edit-set",
+    path: "/edit-set/:id", 
     component: AddFlashCard,
   },
   {
     key: "learning",
     path: "/learning/:id",
     component: Learning,
+  },
+  {
+    key: "folder",
+    path: "folder",
+    component: FolderPage,
   },
 ];
 

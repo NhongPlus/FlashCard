@@ -1,14 +1,18 @@
-// src/pages/Learning/Learning.tsx
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Container, Text, Group, Box, Title, Button, Badge, Grid, Stack, Paper } from '@mantine/core';
+import {
+  Container, Text, Group, Box, Title, Button, Badge, Grid, Stack,
+  Paper, ActionIcon, Modal, Menu
+} from '@mantine/core';
 import { useDisclosure, useHotkeys } from "@mantine/hooks";
 import { AnimatePresence, motion } from "framer-motion";
-import { IconArrowLeft, IconArrowRight, IconArrowsShuffle, IconCheck, IconX } from "@tabler/icons-react";
+import {
+  IconArrowLeft, IconArrowRight, IconArrowsShuffle, IconCheck,
+  IconX, IconDots, IconTrash, IconPencil
+} from "@tabler/icons-react";
 
 // Types
-import type { LearningMode, CardData, StudySetData } from '@/@types/learning';
+import type { LearningMode } from '@/@types/learning';
 
 // Components
 import { FlashCard } from '@/components/FlashCard/FlashCard';
@@ -24,6 +28,7 @@ import { useLearningData } from '@/utils/hooks/useLearningData';
 
 import '@gfazioli/mantine-flip/styles.css';
 import '@gfazioli/mantine-flip/styles.layer.css';
+import { deleteStudySet } from "@/services/StudyData/studySetService";
 
 function Learning() {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +36,7 @@ function Learning() {
 
   // ========== DATA STATES ==========
   const { cards, setCards, studySet, loading } = useLearningData(id || '');
-  const [displayCards, setDisplayCards] = useState<CardData[]>([]);
+  const [displayCards, setDisplayCards] = useState<typeof cards>([]);
 
   // ========== MODE STATES ==========
   const [mode, setMode] = useState<LearningMode>(null);
@@ -39,8 +44,11 @@ function Learning() {
 
   // ========== NAVIGATION STATES ==========
   const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState<1 | -1>(1);
-  const [flipped, { toggle, close }] = useDisclosure(false);
+  const [direction] = useState<1 | -1>(1);
+
+  // 🔧 đổi tên biến close để không bị trùng
+  const [flipped, { toggle, close: closeFlip }] = useDisclosure(false);
+  const [opened, { open, close: closeModal }] = useDisclosure(false);
 
   // ========== CUSTOM HOOKS ==========
   const basicMode = useBasicMode({
@@ -50,7 +58,7 @@ function Learning() {
     setDisplayCards,
     originalCards: cards,
     onComplete: () => setCompletedModalOpened(true),
-    closeFlip: close
+    closeFlip,
   });
 
   const studyMode = useStudyMode({
@@ -61,7 +69,7 @@ function Learning() {
     setCards,
     setDisplayCards,
     onComplete: () => setCompletedModalOpened(true),
-    closeFlip: close
+    closeFlip,
   });
 
   // ========== SYNC DISPLAY CARDS ==========
@@ -87,26 +95,49 @@ function Learning() {
   // ========== MODE SELECTION ==========
   function handleModeSelect(selectedMode: LearningMode) {
     setMode(selectedMode);
-    
     if (selectedMode === 'study') {
       const shuffled = [...cards].sort(() => Math.random() - 0.5);
       setDisplayCards(shuffled);
     } else {
       setDisplayCards(cards);
     }
-    
     setIndex(0);
-    close();
+    studyMode.resetReviewedCount();
+    closeModal();
   }
 
   function handleSelectNewMode() {
     setMode(null);
     setCompletedModalOpened(false);
     setIndex(0);
-    setDisplayCards(cards);
-    close();
+    closeModal();
   }
 
+  function handleResetAndSelectMode() {
+    setMode(null);
+    setCompletedModalOpened(false);
+    setIndex(0);
+    setDisplayCards([]);
+    closeModal();
+  }
+
+  function handleRestartBasic() {
+    basicMode.handleRestart();
+    setCompletedModalOpened(false);
+  }
+
+  function handleContinueStudy() {
+    const unmasteredCards = cards.filter(c => !c.isMastered);
+    if (unmasteredCards.length === 0) {
+      handleResetAndSelectMode();
+      return;
+    }
+    setCompletedModalOpened(false);
+    studyMode.handleContinue();
+  }
+  async function handleDelete() {
+    await deleteStudySet(studySet?.id); // studySetId là id bạn muốn xoá
+  }
   // ========== CALCULATIONS ==========
   const totalCards = displayCards.length;
   const masteredCount = cards.filter(c => c.isMastered).length;
@@ -115,12 +146,10 @@ function Learning() {
   const studyProgressPercent = totalCards > 0 ? (studyMode.reviewedCount / totalCards) * 100 : 0;
   const currentCard = displayCards[index];
 
-  // ========== LOADING STATE ==========
   if (loading) {
     return <Container><Text size="lg" ta="center" mt="xl">Đang tải...</Text></Container>;
   }
 
-  // ========== EMPTY STATE ==========
   if (cards.length === 0) {
     return (
       <Container size="sm" mt="xl">
@@ -133,6 +162,10 @@ function Learning() {
         </Paper>
       </Container>
     );
+  }
+
+  if (!loading && (!currentCard || displayCards.length === 0) && !completedModalOpened) {
+    return <Container><Text size="lg" ta="center" mt="xl">Đang tải thẻ...</Text></Container>;
   }
 
   // ========== MAIN RENDER ==========
@@ -149,10 +182,10 @@ function Learning() {
           mode={mode}
           totalCards={cards.length}
           masteredCount={masteredCount}
-          onReset={studyMode.handleReset}
-          onContinue={studyMode.handleContinue}
+          onReset={() => studyMode.handleReset(handleResetAndSelectMode)}
+          onContinue={handleContinueStudy}
           onSelectMode={handleSelectNewMode}
-          onBackHome={() => navigate(-1)}
+          onRestartBasic={handleRestartBasic}
         />
 
         {/* Header */}
@@ -161,32 +194,34 @@ function Learning() {
             <Title order={2}>{studySet?.title || "Học thẻ"}</Title>
             <Text size="sm" c="dimmed">{studySet?.description}</Text>
           </Box>
-          <Group>
-            {mode === 'basic' && (
-              <Button
-                variant={basicMode.isShuffled ? "filled" : "light"}
-                leftSection={<IconArrowsShuffle size={16} />}
-                onClick={basicMode.handleShuffle}
+
+          <Menu shadow="md" width={150}>
+            <Menu.Target>
+              <ActionIcon variant="outline" color="black" size="lg" radius="xl" aria-label="Settings">
+                <IconDots style={{ width: '70%', height: '70%' }} stroke={1.5} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Settings</Menu.Label>
+              <Menu.Item
+                leftSection={<IconPencil size={14} />}
+                onClick={() => navigate(`/edit-set/${id}`)}
               >
-                {basicMode.isShuffled ? "Bỏ Shuffle" : "Shuffle"}
-              </Button>
-            )}
-            <Badge color={mode === 'study' ? 'red' : 'blue'} size="lg">
-              {mode === 'study' ? '🎯 Study Mode' : '📖 Basic Mode'}
-            </Badge>
-            <Button variant="subtle" onClick={() => navigate(-1)}>Quay lại</Button>
-          </Group>
+                Edit
+              </Menu.Item>
+              <Menu.Item
+                color="red"
+                leftSection={<IconTrash size={14} />}
+                onClick={open}
+              >
+                Delete
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
 
         <Grid>
           <Grid.Col span={{ base: 12, md: 9 }}>
-            {/* Card Counter */}
-            <Group justify="space-between" mb="md">
-              <Text size="lg" fw={500}>Thẻ {index + 1} / {totalCards}</Text>
-              {basicMode.isShuffled && <Badge color="grape" variant="light">Đã shuffle</Badge>}
-            </Group>
-
-            {/* Flashcard */}
             <Box style={{ width: "100%", height: 400, position: "relative" }} mb="md">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -210,27 +245,41 @@ function Learning() {
             {/* Controls */}
             <Stack gap="md">
               {mode === 'basic' ? (
-                <Group justify="center" gap="md">
-                  <Button
-                    size="lg"
-                    variant="light"
-                    leftSection={<IconArrowLeft size={20} />}
-                    onClick={basicMode.handlePrev}
-                    disabled={!basicMode.canGoPrev}
-                    style={{ minWidth: 150 }}
-                  >
-                    Trước
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="light"
-                    rightSection={<IconArrowRight size={20} />}
-                    onClick={basicMode.handleNext}
-                    disabled={!basicMode.canGoNext}
-                    style={{ minWidth: 150 }}
-                  >
-                    Sau
-                  </Button>
+                <Group justify="space-between" gap="md">
+                  {mode === 'basic' && (
+                    <Button
+                      variant={basicMode.isShuffled ? "filled" : "light"}
+                      leftSection={<IconArrowsShuffle size={16} />}
+                      onClick={basicMode.handleShuffle}
+                    >
+                      {basicMode.isShuffled ? "Bỏ Shuffle" : "Shuffle"}
+                    </Button>
+                  )}
+                  <Group>
+                    <Button
+                      size="lg"
+                      variant="light"
+                      leftSection={<IconArrowLeft size={20} />}
+                      onClick={basicMode.handlePrev}
+                      disabled={!basicMode.canGoPrev}
+                      style={{ minWidth: 150 }}
+                    >
+                      Trước
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="light"
+                      rightSection={<IconArrowRight size={20} />}
+                      onClick={basicMode.handleNext}
+                      disabled={!basicMode.canGoNext}
+                      style={{ minWidth: 150 }}
+                    >
+                      Sau
+                    </Button>
+                  </Group>
+                  <Badge color={mode === 'study' ? 'red' : 'blue'} size="lg">
+                    {mode === 'study' ? '🎯 Study Mode' : '📖 Basic Mode'}
+                  </Badge>
                 </Group>
               ) : (
                 <Group justify="center" gap="xl">
@@ -278,6 +327,21 @@ function Learning() {
             />
           </Grid.Col>
         </Grid>
+
+        {/* Setting Modal */}
+        <Modal opened={opened} onClose={closeModal} title="Xác nhận xoá thẻ học" centered>
+          <Text>Bạn có chắc chắn muốn xoá bộ thẻ này không?</Text>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={closeModal}>Huỷ</Button>
+            <Button color="red" onClick={() => {
+              handleDelete()
+              closeModal();
+              navigate(-1)
+            }}>
+              Xoá
+            </Button>
+          </Group>
+        </Modal>
       </Container>
     </div>
   );

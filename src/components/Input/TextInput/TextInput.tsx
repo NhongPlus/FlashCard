@@ -7,14 +7,13 @@ export interface TextInputProps {
   description?: string;
   w?: string | number;
   disabled?: boolean;
-  varlueImport?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (e : any) => void;
+  value?: string;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   h?: number;
   error?: string;
   filled: boolean;
 }
-export const FormTextInput = ({ onChange, filled, label, placeholder, disabled, varlueImport, w, h, error, description, ...props }: TextInputProps) => {
+export const FormTextInput = ({ onChange, filled, label, placeholder, disabled, value, w, h, error, description, }: TextInputProps) => {
   const isErrorInput = Boolean(error)
   return (
     <Box style={{ flex: 1 }}>
@@ -24,11 +23,10 @@ export const FormTextInput = ({ onChange, filled, label, placeholder, disabled, 
         style={w ? { width: w } : { flex: 1 }}
         h={h}
         label={label}
-        value={varlueImport}
+        value={value}
         disabled={disabled}
         onChange={onChange}
         placeholder={placeholder}
-        {...props}
         classNames={{
           label: styles.textInputLabel,
           input: `${styles.textInput} ${isErrorInput ? styles.boderError : ''}`,

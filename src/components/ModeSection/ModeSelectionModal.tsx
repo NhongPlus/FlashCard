@@ -1,9 +1,8 @@
 // src/pages/Learning/components/ModeSelectionModal.tsx
 
-import { Modal, Title, Flex, Paper, Stack, Text, Button } from '@mantine/core';
+import { Modal, Title, Stack, Paper, Group, Text, Button } from '@mantine/core';
 import { IconBook, IconBrain } from '@tabler/icons-react';
-import { type LearningMode } from '@/@types/learning';
-import style from './ModeSelectionModal.module.css';
+import type { LearningMode } from '@/@types/learning';
 
 interface ModeSelectionModalProps {
   opened: boolean;
@@ -14,49 +13,57 @@ export function ModeSelectionModal({ opened, onSelect }: ModeSelectionModalProps
   return (
     <Modal
       opened={opened}
-      onClose={() => {}} // Không cho phép đóng
+      onClose={() => {}}
       centered
-      size="xl"
+      size="lg"
       withCloseButton={false}
       closeOnClickOutside={false}
       closeOnEscape={false}
-      overlayProps={{ backgroundOpacity: 0.85, blur: 3 }}
-      classNames={{ header: style.header }}
-      title="Chọn chế độ học"
+      title={'Chọn chế độ học tập'}
     >
-      <Flex direction={{ base: 'column', sm: 'row' }} gap="lg" py="md">
-        <Paper
-          p="xl"
-          withBorder
-          style={{ flex: 1, cursor: 'pointer' }}
+      <Stack gap="lg" py="md">
+        <Paper 
+          p="xl" 
+          withBorder 
+          style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
           onClick={() => onSelect('basic')}
         >
-          <Stack gap="md" align="center" ta="center">
-            <IconBook size={40} color="#4dabf7" />
-            <Title order={3}>Chế độ Cơ bản</Title>
-            <Text c="dimmed" size="sm">
-              Xem lại các thẻ theo thứ tự tuần tự. Phù hợp để ghi nhớ và làm quen với nội dung bộ thẻ.
+          <Stack gap="md">
+            <Group>
+              <IconBook size={32} color="#4dabf7" />
+              <Title order={3}>Basic Mode</Title>
+            </Group>
+            <Text c="dimmed">
+              Xem thẻ tuần tự, có thể shuffle và quay lại. 
+              Phù hợp để làm quen với nội dung.
             </Text>
-            <Button fullWidth variant="light" mt="md">Chọn chế độ cơ bản</Button>
+            <Button fullWidth variant="light" color="blue">
+              Chọn Basic Mode
+            </Button>
           </Stack>
         </Paper>
 
-        <Paper
-          p="xl"
-          withBorder
-          style={{ flex: 1, cursor: 'pointer' }}
+        <Paper 
+          p="xl" 
+          withBorder 
+          style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
           onClick={() => onSelect('study')}
         >
-          <Stack gap="md" align="center" ta="center">
-            <IconBrain size={40} color="#ff6b6b" />
-            <Title order={3}>Chế độ Học tập</Title>
-            <Text c="dimmed" size="sm">
-              Tự đánh giá mức độ ghi nhớ của bạn với từng thẻ. Phù hợp để kiểm tra và củng cố kiến thức.
+          <Stack gap="md">
+            <Group>
+              <IconBrain size={32} color="#ff6b6b" />
+              <Title order={3}>Study Mode</Title>
+            </Group>
+            <Text c="dimmed">
+              Đánh giá từng thẻ, tự động shuffle. 
+              Phù hợp để kiểm tra kiến thức đã học.
             </Text>
-            <Button fullWidth variant="light" color="red" mt="md">Chọn chế độ học tập</Button>
+            <Button fullWidth variant="light" color="red">
+              Chọn Study Mode
+            </Button>
           </Stack>
         </Paper>
-      </Flex>
+      </Stack>
     </Modal>
   );
 }

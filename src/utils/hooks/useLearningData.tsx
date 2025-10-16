@@ -26,7 +26,13 @@ export function useLearningData(id: string) {
           getStudySet(id),
         ]);
 
-        setCards(cardsData);
+        // ✅ Ensure all cards have isMastered field
+        const cardsWithMastery = cardsData.map(card => ({
+          ...card,
+          isMastered: card.isMastered ?? false, // Default to false if missing
+        }));
+
+        setCards(cardsWithMastery);
         setStudySet(studySetData);
       } catch (err) {
         console.error("Lỗi khi tải dữ liệu:", err);

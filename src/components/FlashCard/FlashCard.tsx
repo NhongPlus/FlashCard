@@ -1,12 +1,8 @@
-// src/pages/Learning/components/FlashCard.tsx
-
+import { Paper, Title, Text, Flex, ActionIcon, Space } from '@mantine/core';
 import { Flip } from '@gfazioli/mantine-flip';
-import { Paper, Flex, ActionIcon, Title, Text, Kbd } from '@mantine/core';
 import { IconVolume2 } from '@tabler/icons-react';
 import { useSpeechSynthesis } from 'react-speech-kit';
-import style from './FlashCard.module.css';
-import '@gfazioli/mantine-flip/styles.css';
-import '@gfazioli/mantine-flip/styles.layer.css';
+
 interface FlashCardProps {
   term: string;
   definition: string;
@@ -16,46 +12,36 @@ interface FlashCardProps {
 }
 
 export function FlashCard({ term, definition, height, flipped, onFlip }: FlashCardProps) {
-  const { speak } = useSpeechSynthesis();
-
-  const handleSpeak = (e: React.MouseEvent, text: string) => {
-    e.stopPropagation(); // Ngăn sự kiện click lan ra Paper và gây lật thẻ
-    speak({ text });
+  const { speak, cancel, speaking } = useSpeechSynthesis();
+  const handleSpeak = (e: React.MouseEvent) => {
+    e.stopPropagation(); // tránh click vào loa bị lật thẻ
+    if (flipped) return; // ❌ không đọc khi đang ở mặt sau
+    if (speaking) cancel();
+    speak({ text: term }); 
   };
-
   return (
-    <Flip h={height} w="100%" flipped={flipped} direction="vertical">
+    <Flip h={height} w="100%" flipped={flipped} direction="vertical" duration={0.3} >
       {/* Front Side */}
       <Paper onClick={onFlip} withBorder shadow="md" radius="md" h={height} style={{ cursor: "pointer" }}>
-        <Flex className={style.card} h="100%" p="xl">
-          <ActionIcon
-            variant="subtle"
-            size="lg"
-            onClick={(e) => handleSpeak(e, term)}
-          >
+        <Flex h="100%" direction="column" align="center" justify="space-between" p="xl">
+          <ActionIcon variant="subtle" size="lg" onClick={handleSpeak} color={speaking ? "blue" : undefined}>
             <IconVolume2 />
           </ActionIcon>
-          <Title order={2} className={style.titleCard}>
+          <Title order={2} c="black" ta="center" style={{ flex: 1, display: "flex", alignItems: "center" }}>
             {term}
           </Title>
-          <Text size="sm" c="dimmed">Nhấn <Kbd>Space</Kbd> hoặc click để lật thẻ</Text>
+          <Text size="sm" c="dimmed">Nhấn Space để lật thẻ</Text>
         </Flex>
       </Paper>
 
       {/* Back Side */}
       <Paper onClick={onFlip} withBorder shadow="md" radius="md" h={height} style={{ cursor: "pointer" }}>
-        <Flex className={style.card} h="100%" p="xl">
-          <ActionIcon
-            variant="subtle"
-            size="lg"
-            onClick={(e) => handleSpeak(e, definition)}
-          >
-            <IconVolume2 />
-          </ActionIcon>
-          <Title order={2} className={style.titleCard}>
+        <Flex h="100%" direction="column" align="center" justify="space-between" p="xl">
+          <Space />
+          <Title order={2} c="black" ta="center" style={{ flex: 1, display: "flex", alignItems: "center" }}>
             {definition}
           </Title>
-           <Text size="sm" c="dimmed">Nhấn <Kbd>Space</Kbd> hoặc click để lật lại</Text>
+          <Text size="sm" c="dimmed">Nhấn Space để lật thẻ</Text>
         </Flex>
       </Paper>
     </Flip>
