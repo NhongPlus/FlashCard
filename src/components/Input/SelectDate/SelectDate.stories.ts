@@ -1,5 +1,6 @@
-import { Meta, StoryObj } from '@storybook/react';
-import { SelectDate, SelectDateProps } from './SelectDate';
+// eslint-disable-next-line storybook/no-renderer-packages
+import type { Meta, StoryObj } from '@storybook/react';
+import { SelectDate, type SelectDateProps } from './SelectDate';
 
 const meta: Meta<SelectDateProps> = {
   title: 'SelectDate',

@@ -1,51 +1,62 @@
-import { type ReactNode, type ElementType } from 'react';
-import {
-  Button as MantineButton,
-  type ButtonProps as MantineButtonProps,
-} from '@mantine/core';
+import { Button, Image } from '@mantine/core';
+import type { ReactNode } from 'react';
 import styles from './ButtonBase.module.css';
 
-interface ButtonBaseProps extends Omit<MantineButtonProps, 'children'> {
-  label?: string;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  component?: ElementType;
-  to?: string;
+export interface ButtonBaseProps {
+  label: string;
+  disabled?: boolean;
+  color?: string;
+  icon?: ReactNode;
+  textColor?: string;
+  size?: string;
+  type?: 'button' | 'submit' | 'reset';
+  variant?: 'filled' | 'outline';
   fullWidth?: boolean;
   onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
 }
 
-export function ButtonBase({
+export const ButtonBase = ({
   label,
-  size = 'md',
-  leftIcon,
-  rightIcon,
   disabled = false,
-  onClick,
-  fullWidth = false,
+  color = '#4255FF',
+  icon,
+  textColor = '#fff',
+  size = 'md',
   type = 'button',
-  component,
-  to,
-  ...rest
-}: ButtonBaseProps) {
+  variant = 'filled',
+  fullWidth = false,
+  onClick,
+}: ButtonBaseProps) => {
+  const renderIcon = (icon: ReactNode) => {
+    if (typeof icon === 'string') return <Image src={icon} />;
+    return icon ?? null;
+  };
+
+  const buttonStyles = {
+    backgroundColor: variant === 'filled' ? color : 'transparent',
+    color: variant === 'filled' ? textColor : color,
+    borderColor: variant === 'filled' ? 'transparent' : color,
+  };
+
   return (
-    <MantineButton
-      component={component as React.ElementType<unknown>}
-      to={to}
-      type={type}
-      variant="filled"
+    <Button
+      disabled={disabled}
+      variant={variant}
       radius="xl"
       size={size}
-      disabled={disabled}
-      onClick={onClick}
+      type={type}
+      leftSection={renderIcon(icon)}
+      style={buttonStyles}
       fullWidth={fullWidth}
-      leftSection={leftIcon}
-      rightSection={rightIcon}
-      classNames={{ root: styles.rootClass }}
-      {...rest}
+      fw={500}
+      classNames={{
+        root: styles.ButtonBase,
+        section: styles.sectionButton,
+        label: styles.labelButton,
+      }}
+      onClick={onClick}
     >
       {label}
-    </MantineButton>
+    </Button>
   );
-}
+};

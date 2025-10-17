@@ -10,7 +10,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import FlashcardItem from '@/components/CardItem/FlashcardItem';
 import { FormTextInput } from '@/components/Input/TextInput/TextInput';
-import { ButtonBase } from '@/components/Button/ButtonBase';
 import LoadingScreen from '@/components/Layout/LoadingScreen/LoadingScreen';
 import styles from './AddFlashCard.module.css';
 
@@ -23,6 +22,7 @@ import {
 import useAuth from '@/utils/hooks/useAuth';
 import { notifications } from '@mantine/notifications';
 import { FormTextarea } from '@/components/Input/TextArea/TextArea';
+import { ButtonBase } from '@/components/Button/ButtonBase';
 
 // Kiểu dữ liệu
 type ClientCard = {
@@ -406,7 +406,8 @@ function AddFlashCard() {
                             label={isSubmitting ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Tạo')}
                             type="submit"
                             disabled={isSubmitting || isLoadingData}
-                            fullWidth={false}
+                            fullWidth
+                            variant="filled"
                         />
                     </Group>
                 </form>

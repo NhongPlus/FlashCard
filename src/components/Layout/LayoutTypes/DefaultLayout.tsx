@@ -5,7 +5,6 @@ import {
 } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import classes from './DefaultLayout.module.css';
-import { ButtonBase } from '@/components/Button/ButtonBase';
 import { CustomPill } from '@/components/CustomPill/CustomPill';
 import Background from '@/assets/images/background/background.jpg'
 import CustomCarousel from '@/components/Carousel/CustomCarousel';
@@ -104,7 +103,16 @@ function DefaultLayout() {
               <Text className={classes.text} style={{ marginBottom: 30 }}>
                 Biến thẻ ghi nhớ thành câu hỏi trắc nghiệm và nhiều nội dung khác với chế độ Học. Củng cố kiến thức của bạn bằng các trò chơi học tập như Ghép thẻ.
               </Text>
-              <ButtonBase component={Link} to="/login" size='xl' label='Bắt đầu' color='#4255FF' />
+              <Button
+                component={Link}
+                to="/login"
+                size="xl"
+                color="#4255FF"
+                radius="xl"
+                variant="filled"
+              >
+                Bắt đầu
+              </Button>
             </Group>
           </Grid.Col>
         </Grid>
@@ -119,7 +127,16 @@ function DefaultLayout() {
               <Text className={classes.text}>
                 Ghi nhớ mọi thứ với các bài kiểm tra thử và phiên học được cá nhân hóa. 98% học sinh cho biết Quizlet đã giúp họ hiểu bài hơn.
               </Text>
-              <ButtonBase component={Link} to="/login" size='xl' label='Bắt đầu' color='#4255FF' />
+              <Button
+                component={Link}
+                to="/login"
+                size="xl"
+                color="#4255FF"
+                radius="xl"
+                variant="filled"
+              >
+                Bắt đầu
+              </Button>
             </Group>
           </Grid.Col>
           <Grid.Col span={1}></Grid.Col>
