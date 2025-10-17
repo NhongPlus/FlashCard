@@ -1,5 +1,5 @@
-import { Meta, StoryObj } from '@storybook/react';
-import { ButtonBase, ButtonBaseProps } from './ButtonBase';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { ButtonBase, type ButtonBaseProps } from './ButtonBase';
 
 const meta: Meta<ButtonBaseProps> = {
   title: 'ButtonBase/LamCaiButtonBase',  

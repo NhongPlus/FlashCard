@@ -1,5 +1,5 @@
-import { Meta, StoryObj } from '@storybook/react';
-import { FormNumberInput, NumberInputProps } from './NumberInput';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { FormNumberInput, type NumberInputProps } from './NumberInput';
 
 const meta: Meta<NumberInputProps> = {
   title: 'NumberInput/LamCaiNumberInput',  
