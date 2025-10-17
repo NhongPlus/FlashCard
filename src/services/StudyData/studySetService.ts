@@ -17,9 +17,8 @@ export interface StudySetData {
   title: string;
   description?: string;
   userId: string;
-  folderId?: string | null; // Có thể null
+  folderId?: string | null;
   cardCount: number;
-  // Các trường khác...
 }
 
 // CREATE - Tạo một study set rỗng (chưa có card)
@@ -50,10 +49,11 @@ export async function getStudySet(studySetId: string): Promise<StudySetData | nu
   }
 }
 
-
-// Omit<T, K> là một Utility Type của TypeScript. 
-// Nó tạo ra một kiểu mới bằng cách lấy kiểu T và loại bỏ đi các thuộc tính K
-export async function updateStudySet(studySetId: string, data: Partial<Omit<StudySetData, 'id' | 'userId'>>): Promise<void> {
+// UPDATE - Cập nhật study set
+export async function updateStudySet(
+  studySetId: string,
+  data: Partial<Omit<StudySetData, 'id' | 'userId'>>
+): Promise<void> {
   try {
     await updateDoc(doc(db, "studySets", studySetId), data);
   } catch (error) {
@@ -62,12 +62,7 @@ export async function updateStudySet(studySetId: string, data: Partial<Omit<Stud
   }
 }
 
-/**
- * UPDATE - Di chuyển study set vào một folder (hoặc ra ngoài)
- * @param studySetId ID của học phần cần di chuyển
- * @param folderId ID của thư mục mới, hoặc null để đưa ra ngoài
- */
-
+// DELETE - Xóa study set document
 export async function deleteStudySet(studySetId: string): Promise<void> {
   try {
     await deleteDoc(doc(db, "studySets", studySetId));
@@ -77,9 +72,8 @@ export async function deleteStudySet(studySetId: string): Promise<void> {
   }
 }
 
-
 /**
- * Cập nhật thông tin của một bộ thẻ và các thẻ của nó một cách tối ưu.
+ * ✅ FIXED: Cập nhật thông tin của một bộ thẻ và các thẻ của nó một cách tối ưu.
  * @param studySetId - ID của bộ thẻ cần cập nhật.
  * @param studySetUpdateData - Dữ liệu mới cho bộ thẻ.
  * @param cardsToCreate - Các thẻ mới cần tạo.
@@ -87,31 +81,61 @@ export async function deleteStudySet(studySetId: string): Promise<void> {
  * @param cardIdsToDelete - ID của các thẻ cần xóa.
  */
 export async function updateStudySetWithCards(
-    studySetId: string,
-    studySetUpdateData: Partial<StudySetData>,
-    cardsToCreate: Omit<CardData, 'id' | 'studySetId'>[],
-    cardsToUpdate: { id: string, data: Partial<CardData> }[],
-    cardIdsToDelete: string[]
+  studySetId: string,
+  studySetUpdateData: Partial<StudySetData>,
+  cardsToCreate: Omit<CardData, 'id' | 'studySetId'>[],
+  cardsToUpdate: { id: string; data: Partial<CardData> }[],
+  cardIdsToDelete: string[]
 ) {
-    const batch = writeBatch(db);
+  const batch = writeBatch(db);
 
-    const studySetRef = doc(db, 'studySets', studySetId);
-    batch.update(studySetRef, studySetUpdateData);
+  try {
+    // 1. ✅ FIXED: Lấy cardCount hiện tại từ document
+    const studySetRef = doc(db, "studySets", studySetId);
+    const studySetSnap = await getDoc(studySetRef);
 
+    if (!studySetSnap.exists()) {
+      throw new Error("Study set không tồn tại");
+    }
+
+    const currentCardCount = studySetSnap.data()?.cardCount || 0;
+    const newCardCount = currentCardCount + cardsToCreate.length - cardIdsToDelete.length;
+
+    // 2. ✅ FIXED: Update Study Set với cardCount mới và updatedAt
+    batch.update(studySetRef, {
+      ...studySetUpdateData,
+      cardCount: Math.max(0, newCardCount),
+      updatedAt: serverTimestamp(),
+    });
+
+    // 3. ✅ FIXED: Create new cards - dùng collection(db, "cards") thay vì subcollection path
     cardsToCreate.forEach(cardData => {
-        const cardRef = doc(collection(db, `studySets/${studySetId}/cards`));
-        batch.set(cardRef, cardData);
+      const cardRef = doc(collection(db, "cards"));
+      batch.set(cardRef, {
+        ...cardData,
+        studySetId: studySetId,
+        createdAt: serverTimestamp(),
+      });
     });
 
+    // 4. Update existing cards
     cardsToUpdate.forEach(cardUpdate => {
-        const cardRef = doc(db, `studySets/${studySetId}/cards`, cardUpdate.id);
-        batch.update(cardRef, cardUpdate.data);
+      const cardRef = doc(db, "cards", cardUpdate.id);
+      batch.update(cardRef, {
+        ...cardUpdate.data,
+        updatedAt: serverTimestamp(),
+      });
     });
 
+    // 5. Delete cards
     cardIdsToDelete.forEach(cardId => {
-        const cardRef = doc(db, `studySets/${studySetId}/cards`, cardId);
-        batch.delete(cardRef);
+      const cardRef = doc(db, "cards", cardId);
+      batch.delete(cardRef);
     });
 
     await batch.commit();
+  } catch (error) {
+    console.error("Error updating study set with cards:", error);
+    throw new Error("Không thể cập nhật bộ thẻ");
+  }
 }

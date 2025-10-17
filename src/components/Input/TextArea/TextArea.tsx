@@ -1,32 +1,43 @@
-import { Box, TextInput, Text } from '@mantine/core';
-import styles from './TextInput.module.css'
+import { Box, Textarea, Text } from '@mantine/core';
+import styles from './TextArea.module.css'
 
-export interface TextInputProps {
+export interface TextareaProps {
   label?: string;
   placeholder?: string;
   description?: string;
   w?: string | number;
   disabled?: boolean;
   value?: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
   h?: number;
   error?: string;
   filled: boolean;
   required: boolean;
 }
-export const FormTextInput = ({ required, onChange, filled, label, placeholder, disabled, value, w, h, error, description, }: TextInputProps) => {
-  const isErrorInput = Boolean(error)
+
+export const FormTextarea = ({
+  required,
+  onChange,
+  filled,
+  label,
+  placeholder,
+  disabled,
+  value,
+  w,
+  h,
+  error,
+  description,
+}: TextareaProps) => {
+  const isErrorInput = Boolean(error);
+
   return (
     <Box style={{ flex: 1 }}>
-      <TextInput
+      <Textarea
         w={w}
-        variant={filled == true ? "filled" : 'default'}
-        style={w ? { width: w } : { flex: 1 }}
         styles={{
-          input: {
-            height: h ? h : undefined,
-          },
-        }}
+          input: { height: h }, // đây mới là chỗ đúng để set chiều cao
+        }} // chia tương đối, 1 dòng ~24px
+        variant={filled ? 'filled' : 'default'}
         label={label}
         value={value}
         disabled={disabled}
@@ -50,5 +61,5 @@ export const FormTextInput = ({ required, onChange, filled, label, placeholder, 
         </Text>
       )}
     </Box>
-  )
+  );
 };
