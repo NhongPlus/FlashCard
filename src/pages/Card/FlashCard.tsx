@@ -1,5 +1,4 @@
 import { Card, Text } from "@mantine/core";
-import { useState } from "react";
 interface FlashCardProps {
     cards: { id: string; english: string; vietnamese: string; }[],
     show: number,

@@ -4,9 +4,9 @@ import { useDisclosure } from '@mantine/hooks';
 import classes from './HeaderMenu.module.css';
 import { Link } from 'react-router-dom';
 import useAuth from '@/utils/hooks/useAuth';
-import { getAuth } from 'firebase/auth';
 import useUserProfile from '@/utils/hooks/useUserProfile';
 import { logout } from '@/services/User/authService';
+import { notifications } from '@mantine/notifications';
 
 const NAVIGATION_LINKS = {
   authenticated: [
@@ -25,11 +25,11 @@ export function HeaderMenu() {
   const [opened, { toggle }] = useDisclosure(false);
   const { user, isAuthenticated } = useAuth();
   const currentLinks = isAuthenticated ? NAVIGATION_LINKS.authenticated : NAVIGATION_LINKS.guest;
-  const { profile, loading, error } = useUserProfile();
+  const { profile } = useUserProfile();
 
   const renderNavItems = () => {
     return currentLinks.map((link) => {
-      if (link.links) {
+      if  ('links' in link) {
         return (
           <Menu key={link.label} trigger="hover" transitionProps={{ exitDuration: 0 }} withinPortal>
             <Menu.Target>
@@ -60,6 +60,25 @@ export function HeaderMenu() {
     });
   };
 
+  // ✅ FIX #1: Handle logout async properly
+  const handleLogout = async () => {
+    try {
+      await logout();
+      notifications.show({
+        title: 'Thành công',
+        message: 'Đã đăng xuất',
+        color: 'green'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      notifications.show({
+        title: 'Lỗi',
+        message: 'Đã có lỗi xảy ra khi đăng xuất',
+        color: 'red'
+      });
+    }
+  };
+
   const renderUserMenu = () => {
     if (!isAuthenticated || !user) return null;
 
@@ -67,8 +86,9 @@ export function HeaderMenu() {
       <Menu width={260} transitionProps={{ transition: 'pop-top-right' }} withinPortal>
         <Menu.Target>
           <UnstyledButton>
+            {/* ✅ FIX #2: Handle undefined imageActive & photoURL */}
             <Avatar
-              src={profile?.imageActive || user.photoURL}
+              src={profile?.imageActive || user.photoURL || undefined}
               radius="xl"
               size={40}
             />
@@ -76,10 +96,16 @@ export function HeaderMenu() {
         </Menu.Target>
         <Menu.Dropdown>
           <Group px={10} py={20}>
-            <Avatar src={profile?.imageActive || user.photoURL} w={50} h={50} />
+            {/* ✅ FIX #2: Handle undefined imageActive & photoURL */}
+            <Avatar 
+              src={profile?.imageActive || user.photoURL || undefined} 
+              w={50} 
+              h={50} 
+            />
             <Flex direction="column">
-              <Text>{profile?.displayName || 'New user'}</Text>
-              <Text c="#586380">{profile?.email}</Text>
+              {/* ✅ FIX #3: Handle undefined displayName & email */}
+              <Text fw={500}>{profile?.displayName || user.displayName || 'New user'}</Text>
+              <Text size="sm" c="#586380">{profile?.email || user.email || ''}</Text>
             </Flex>
           </Group>
           <Menu.Divider />
@@ -90,9 +116,10 @@ export function HeaderMenu() {
           >
             Account settings
           </Menu.Item>
+          {/* ✅ FIX #1 & #4: Handle async logout + remove onClick warning */}
           <Menu.Item
             leftSection={<IconLogout size={16} stroke={1.5} />}
-            onClick={(async () => logout())}
+            onClick={handleLogout}
           >
             Logout
           </Menu.Item>
@@ -105,7 +132,8 @@ export function HeaderMenu() {
     <header className={classes.header}>
       <Container size="md">
         <div className={classes.inner}>
-          <Link to={isAuthenticated ? "/dashboard" : "/about"}>
+          {/* ✅ FIX #5: Use Link component correctly */}
+          <Link to={isAuthenticated ? "/dashboard" : "/about"} style={{ display: 'flex', alignItems: 'center' }}>
             <IconBrandFacebookFilled size={28} />
           </Link>
 

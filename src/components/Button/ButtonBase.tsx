@@ -1,66 +1,51 @@
-import {  type ReactNode } from 'react';
+import { type ReactNode, type ElementType } from 'react';
 import {
   Button as MantineButton,
+  type ButtonProps as MantineButtonProps,
 } from '@mantine/core';
 import styles from './ButtonBase.module.css';
 
-export interface ButtonBaseProps {
+interface ButtonBaseProps extends Omit<MantineButtonProps, 'children'> {
   label?: string;
-  size?: string;
-  disable?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
-  onClick?: () => void;
-  color?: string;
+  component?: ElementType;
   to?: string;
-  fullWidth: boolean
+  fullWidth?: boolean;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
 }
 
-export const ButtonBase = ({
+export function ButtonBase({
   label,
-  size,
-  disable = false,
+  size = 'md',
   leftIcon,
   rightIcon,
+  disabled = false,
   onClick,
-  fullWidth,
-  ...props
-}: ButtonBaseProps) => {
-  // const renderIcon = (icon: ReactNode) => {
-  //   let iconSize = 16;
-  //   if (size === 'lg') {
-  //     iconSize = 20;
-  //   }
-  //   if (typeof (icon) === 'string') {
-  //     return <Image src={icon} />
-  //   } else {
-  //     return (
-  //       <div style={{
-  //         width: iconSize,
-  //         height: iconSize
-  //       }}>
-  //       </div>
-  //     );
-  //   }
-  // };
-
+  fullWidth = false,
+  type = 'button',
+  component,
+  to,
+  ...rest
+}: ButtonBaseProps) {
   return (
     <MantineButton
+      component={component as React.ElementType<unknown>}
+      to={to}
+      type={type}
       variant="filled"
       radius="xl"
       size={size}
-      fz={size}
+      disabled={disabled}
       onClick={onClick}
-      disabled={disable}
-      classNames={{
-        root: styles.rootClass,  // tên là rootClass
-      }}
-      leftSection={(leftIcon)}
-      rightSection={(rightIcon)}
       fullWidth={fullWidth}
-      {...props}
+      leftSection={leftIcon}
+      rightSection={rightIcon}
+      classNames={{ root: styles.rootClass }}
+      {...rest}
     >
       {label}
     </MantineButton>
   );
-};
+}

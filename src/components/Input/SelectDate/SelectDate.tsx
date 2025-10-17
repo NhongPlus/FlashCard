@@ -1,7 +1,6 @@
 import { Box, Text, Image, Combobox, InputBase, useCombobox } from '@mantine/core';
 import styles from './SelectDate.module.css';
 import '@mantine/dates/styles.css';
-import { useState } from 'react';
 import { DatePicker, type DatesRangeValue } from '@mantine/dates';
 import Calendar from '@/assets/images/icon/Calendar.svg'
 import { useUncontrolled } from '@mantine/hooks';

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import { Button, Loader, Text, Container, Paper, Group, Avatar, FileButton, Stack, Alert } from "@mantine/core";
-import { getDoc, doc, updateDoc } from "firebase/firestore";
+import { getDoc, doc } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import useAuth from "@/utils/hooks/useAuth";
 import { createUserDoc, updateUserDoc, type UserData } from "@/services/User/userService";
@@ -555,7 +555,7 @@ function EditProfileForm({ profile, userId }: { profile: UserData; userId: strin
           {/* Email (readonly) */}
           <FormTextInput
             label="Email"
-            varlueImport={profile.email}
+            value={profile.email}
             disabled
             description="Email không thể thay đổi"
           />

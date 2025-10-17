@@ -274,7 +274,7 @@ function AddFlashCard() {
                 }
                 return null;
             })
-            .filter((c): c is { id: string; data: any; } => c !== null);
+            .filter((c): c is { id: string; data: { front: string; back: string; order: number; } } => c !== null);
 
         await updateStudySetWithCards(
             id,
@@ -302,7 +302,7 @@ function AddFlashCard() {
         const studySetData = {
             title: values.title.trim(),
             description: values.description.trim() || '',
-            userId: user.uid,
+            userId: user!.uid,
             folderId: null,
             language: { front: "en", back: "vi" },
             settings: { isPublic: true, allowCopy: true, shuffleCards: false },
@@ -405,7 +405,7 @@ function AddFlashCard() {
                         <ButtonBase
                             label={isSubmitting ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Tạo')}
                             type="submit"
-                            disable={isSubmitting || isLoadingData}
+                            disabled={isSubmitting || isLoadingData}
                             fullWidth={false}
                         />
                     </Group>

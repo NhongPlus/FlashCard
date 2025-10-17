@@ -1,3 +1,4 @@
+// eslint-disable-next-line storybook/no-renderer-packages
 import type { Meta, StoryObj } from '@storybook/react';
 import { ButtonBase } from './ButtonBase';
 import type { ButtonBaseProps } from './ButtonBase';
@@ -10,13 +11,13 @@ const meta: Meta<ButtonBaseProps> = {
     layout: 'centered',
   },
   argTypes: {
-    disable: { control: 'boolean' }, 
+    disabled: { control: 'boolean' }, 
     size: { 
       control: { type: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'] } 
     },  
   },
   args: {
-    disable: false,
+    disabled: false,
     size: 'md',
   },
 };
@@ -28,7 +29,7 @@ export const Large: Story = {
   args: {
     label: 'Button',
     size: 'lg',
-    disable: false,
+    disabled: false,
  
   },
 };
@@ -37,7 +38,7 @@ export const Medium: Story = {
   args: {
     label: 'Button',
     size: 'md',
-    disable: false,
+    disabled: false,
  
   },
 };
@@ -45,7 +46,7 @@ export const Small: Story = {
   args: {
     label: 'Button',
     size: 'sm',
-    disable: false,
+    disabled: false,
 
   },
 };
@@ -53,6 +54,6 @@ export const SuperSmall: Story = {
   args: {
     label: 'Label',
     size: 'xs',
-    disable: false,
+    disabled: false,
   },
 };

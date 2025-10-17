@@ -1,6 +1,7 @@
 import {
   Container, Title, Text, Group, Space, Grid, Flex, Image,
   BackgroundImage,
+  Button,
 } from '@mantine/core';
 import { Link } from 'react-router-dom';
 import classes from './DefaultLayout.module.css';
@@ -42,7 +43,16 @@ function DefaultLayout() {
               Join our community to access all features.
             </Text>
             <Group justify="center" mt="xl">
-              <ButtonBase component={Link} to="/login" size='xl' label='Bắt đầu' />
+              <Button
+                component={Link}
+                to="/login"
+                size="xl"
+                color="#4255FF"
+                radius="xl"
+                variant="filled"
+              >
+                Bắt đầu
+              </Button>
             </Group>
           </Flex>
         </Container>

@@ -1,9 +1,10 @@
-import { type ElementType, type ReactNode } from 'react';
+import {  type ReactNode } from 'react';
 import {
   Button as MantineButton,
   Image,
 } from '@mantine/core';
 import styles from './ButtonTransparent.module.css';
+import { Link } from 'react-router-dom';
 
 export interface ButtonTransparentProps {
   label?: string;
@@ -13,7 +14,6 @@ export interface ButtonTransparentProps {
   rightIcon?: ReactNode;
   onClick?: () => void;
   color?: string;
-  component?: ElementType<any>; // VD Link
   to?: string;
 }
 
@@ -24,8 +24,6 @@ export const ButtonTransparent = ({
   leftIcon,
   rightIcon,
   onClick,
-  component,
-  to,
   ...props
 }: ButtonTransparentProps) => {
   const renderIcon = (icon: ReactNode) => {
@@ -48,21 +46,19 @@ export const ButtonTransparent = ({
 
   return (
     <MantineButton
-      variant="transparent"
+      to={''} variant="transparent"
       radius="xl"
       size={size}
       fz={size}
       onClick={onClick}
       disabled={disable}
       classNames={{
-        root: styles.rootClass,  // tên là rootClass
+        root: styles.rootClass, // tên là rootClass
       }}
       leftSection={renderIcon(leftIcon)}
       rightSection={renderIcon(rightIcon)}
-      component={component} // thêm dòng này
-      to={to} // thêm dòng này
-      {...props}
-    >
+      component={Link} // thêm dòng này
+      {...props}    >
       {label}
     </MantineButton>
   );

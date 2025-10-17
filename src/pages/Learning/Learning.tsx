@@ -83,10 +83,12 @@ function Learning() {
   useHotkeys([
     ['space', () => toggle()],
     ['ArrowRight', () => {
+      if (!mode) return;
       if (mode === 'study') studyMode.handleMastery(true);
       else if (mode === 'basic') basicMode.handleNext();
     }],
     ['ArrowLeft', () => {
+      if (!mode) return;
       if (mode === 'study') studyMode.handleMastery(false);
       else if (mode === 'basic') basicMode.handlePrev();
     }],
@@ -135,9 +137,11 @@ function Learning() {
     setCompletedModalOpened(false);
     studyMode.handleContinue();
   }
+
   async function handleDelete() {
-    await deleteStudySet(studySet?.id); // studySetId là id bạn muốn xoá
+    await deleteStudySet(studySet!.id);
   }
+
   // ========== CALCULATIONS ==========
   const totalCards = displayCards.length;
   const masteredCount = cards.filter(c => c.isMastered).length;
@@ -244,17 +248,15 @@ function Learning() {
 
             {/* Controls */}
             <Stack gap="md">
-              {mode === 'basic' ? (
+              {mode && mode === 'basic' ? (
                 <Group justify="space-between" gap="md">
-                  {mode === 'basic' && (
-                    <Button
-                      variant={basicMode.isShuffled ? "filled" : "light"}
-                      leftSection={<IconArrowsShuffle size={16} />}
-                      onClick={basicMode.handleShuffle}
-                    >
-                      {basicMode.isShuffled ? "Bỏ Shuffle" : "Shuffle"}
-                    </Button>
-                  )}
+                  <Button
+                    variant={basicMode.isShuffled ? "filled" : "light"}
+                    leftSection={<IconArrowsShuffle size={16} />}
+                    onClick={basicMode.handleShuffle}
+                  >
+                    {basicMode.isShuffled ? "Bỏ Shuffle" : "Shuffle"}
+                  </Button>
                   <Group>
                     <Button
                       size="lg"
@@ -277,11 +279,9 @@ function Learning() {
                       Sau
                     </Button>
                   </Group>
-                  <Badge color={mode === 'study' ? 'red' : 'blue'} size="lg">
-                    {mode === 'study' ? '🎯 Study Mode' : '📖 Basic Mode'}
-                  </Badge>
+                  <Badge color="blue" size="lg">📖 Basic Mode</Badge>
                 </Group>
-              ) : (
+              ) : mode && mode === 'study' ? (
                 <Group justify="center" gap="xl">
                   <Button
                     size="lg"
@@ -304,7 +304,7 @@ function Learning() {
                     Đã thuộc
                   </Button>
                 </Group>
-              )}
+              ) : null}
 
               <ProgressSection
                 mode={mode}
@@ -333,11 +333,14 @@ function Learning() {
           <Text>Bạn có chắc chắn muốn xoá bộ thẻ này không?</Text>
           <Group justify="flex-end" mt="md">
             <Button variant="default" onClick={closeModal}>Huỷ</Button>
-            <Button color="red" onClick={() => {
-              handleDelete()
-              closeModal();
-              navigate(-1)
-            }}>
+            <Button
+              color="red"
+              onClick={() => {
+                handleDelete();
+                closeModal();
+                navigate(-1);
+              }}
+            >
               Xoá
             </Button>
           </Group>

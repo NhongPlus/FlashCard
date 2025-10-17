@@ -1,5 +1,5 @@
-import { Meta, StoryObj } from '@storybook/react';
-import { SingleDate, SingleDateProps } from './SingleDate';
+import type { Meta, StoryObj } from '@storybook/react';
+import { SingleDate, type SingleDateProps } from './SingleDate';
 
 const meta: Meta<SingleDateProps> = {
   title: 'SingleDate',

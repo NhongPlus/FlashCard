@@ -8,11 +8,11 @@ export interface TextInputProps {
   w?: string | number;
   disabled?: boolean;
   value?: string;
-  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void; // thêm ?
   h?: number;
   error?: string;
-  filled: boolean;
-  required: boolean;
+  filled?: boolean; // thêm ?
+  required?: boolean; // thêm ?
 }
 export const FormTextInput = ({ required, onChange, filled, label, placeholder, disabled, value, w, h, error, description, }: TextInputProps) => {
   const isErrorInput = Boolean(error)
