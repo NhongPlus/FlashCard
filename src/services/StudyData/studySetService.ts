@@ -1,32 +1,32 @@
+// src/services/StudyData/studySetService.ts
 import {
   collection,
   doc,
   getDoc,
+  getDocs,
+  query,
+  where,
   updateDoc,
   deleteDoc,
   addDoc,
   serverTimestamp,
   writeBatch,
+  limit,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import type { CardData } from "./cardService";
 
-// Interface của bạn
-export interface StudySetData {
-  id: string;
-  title: string;
-  description?: string;
-  userId: string;
-  folderId?: string | null;
-  cardCount: number;
-}
+import type { CardData, StudySetData } from "@/@types/learning";
+
 
 // CREATE - Tạo một study set rỗng (chưa có card)
 export async function createStudySet(data: Omit<StudySetData, 'id'>): Promise<string> {
   try {
     const docRef = await addDoc(collection(db, "studySets"), {
       ...data,
+      isPublic: data.isPublic ?? true, // Default là public
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
     return docRef.id;
   } catch (error) {
@@ -49,16 +49,44 @@ export async function getStudySet(studySetId: string): Promise<StudySetData | nu
   }
 }
 
-// UPDATE - Cập nhật study set
+// UPDATE - Cập nhật study set (bao gồm cả isPublic)
 export async function updateStudySet(
   studySetId: string,
   data: Partial<Omit<StudySetData, 'id' | 'userId'>>
 ): Promise<void> {
   try {
-    await updateDoc(doc(db, "studySets", studySetId), data);
+    await updateDoc(doc(db, "studySets", studySetId), {
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
   } catch (error) {
     console.error("Error updating study set:", error);
     throw new Error("Không thể cập nhật học phần");
+  }
+}
+
+// ✅ NEW: Toggle public/private status
+export async function toggleStudySetVisibility(studySetId: string): Promise<boolean> {
+  try {
+    const studySetRef = doc(db, "studySets", studySetId);
+    const studySetSnap = await getDoc(studySetRef);
+    
+    if (!studySetSnap.exists()) {
+      throw new Error("Study set không tồn tại");
+    }
+    
+    const currentIsPublic = studySetSnap.data().isPublic ?? true;
+    const newIsPublic = !currentIsPublic;
+    
+    await updateDoc(studySetRef, {
+      isPublic: newIsPublic,
+      updatedAt: serverTimestamp(),
+    });
+    
+    return newIsPublic;
+  } catch (error) {
+    console.error("Error toggling study set visibility:", error);
+    throw new Error("Không thể thay đổi trạng thái công khai");
   }
 }
 
@@ -72,14 +100,7 @@ export async function deleteStudySet(studySetId: string): Promise<void> {
   }
 }
 
-/**
- * ✅ FIXED: Cập nhật thông tin của một bộ thẻ và các thẻ của nó một cách tối ưu.
- * @param studySetId - ID của bộ thẻ cần cập nhật.
- * @param studySetUpdateData - Dữ liệu mới cho bộ thẻ.
- * @param cardsToCreate - Các thẻ mới cần tạo.
- * @param cardsToUpdate - Các thẻ cần cập nhật.
- * @param cardIdsToDelete - ID của các thẻ cần xóa.
- */
+// ✅ Updated: Cập nhật thông tin của một bộ thẻ và các thẻ của nó
 export async function updateStudySetWithCards(
   studySetId: string,
   studySetUpdateData: Partial<StudySetData>,
@@ -90,7 +111,6 @@ export async function updateStudySetWithCards(
   const batch = writeBatch(db);
 
   try {
-    // 1. ✅ FIXED: Lấy cardCount hiện tại từ document
     const studySetRef = doc(db, "studySets", studySetId);
     const studySetSnap = await getDoc(studySetRef);
 
@@ -101,14 +121,12 @@ export async function updateStudySetWithCards(
     const currentCardCount = studySetSnap.data()?.cardCount || 0;
     const newCardCount = currentCardCount + cardsToCreate.length - cardIdsToDelete.length;
 
-    // 2. ✅ FIXED: Update Study Set với cardCount mới và updatedAt
     batch.update(studySetRef, {
       ...studySetUpdateData,
       cardCount: Math.max(0, newCardCount),
       updatedAt: serverTimestamp(),
     });
 
-    // 3. ✅ FIXED: Create new cards - dùng collection(db, "cards") thay vì subcollection path
     cardsToCreate.forEach(cardData => {
       const cardRef = doc(collection(db, "cards"));
       batch.set(cardRef, {
@@ -118,7 +136,6 @@ export async function updateStudySetWithCards(
       });
     });
 
-    // 4. Update existing cards
     cardsToUpdate.forEach(cardUpdate => {
       const cardRef = doc(db, "cards", cardUpdate.id);
       batch.update(cardRef, {
@@ -127,7 +144,6 @@ export async function updateStudySetWithCards(
       });
     });
 
-    // 5. Delete cards
     cardIdsToDelete.forEach(cardId => {
       const cardRef = doc(db, "cards", cardId);
       batch.delete(cardRef);
@@ -137,5 +153,54 @@ export async function updateStudySetWithCards(
   } catch (error) {
     console.error("Error updating study set with cards:", error);
     throw new Error("Không thể cập nhật bộ thẻ");
+  }
+}
+
+// ✅ NEW: Lấy tất cả public study sets (để search/explore)
+export async function getPublicStudySets(limitCount: number = 50): Promise<StudySetData[]> {
+  try {
+    const q = query(
+      collection(db, "studySets"),
+      where("isPublic", "==", true),
+      orderBy("createdAt", "desc"),
+      limit(limitCount)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data() 
+    } as StudySetData));
+  } catch (error) {
+    console.error("Error getting public study sets:", error);
+    throw new Error("Không thể tải danh sách học phần công khai");
+  }
+}
+
+// ✅ NEW: Search public study sets theo keyword
+export async function searchPublicStudySets(keyword: string): Promise<StudySetData[]> {
+  try {
+    // Firestore không hỗ trợ full-text search, nên phải lấy tất cả rồi filter
+    const q = query(
+      collection(db, "studySets"),
+      where("isPublic", "==", true),
+      limit(100) // Giới hạn để tránh quá tải
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const allPublicSets = querySnapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data() 
+    } as StudySetData));
+    
+    // Filter theo keyword (case-insensitive)
+    const lowerKeyword = keyword.toLowerCase();
+    return allPublicSets.filter(set => 
+      set.title.toLowerCase().includes(lowerKeyword) ||
+      set.description?.toLowerCase().includes(lowerKeyword)
+    );
+  } catch (error) {
+    console.error("Error searching public study sets:", error);
+    throw new Error("Không thể tìm kiếm học phần");
   }
 }

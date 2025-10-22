@@ -3,9 +3,9 @@ import { writeBatch, doc, collection, query, where, getDocs } from "firebase/fir
 import { db } from "@/config/firebase";
 
 // SỬA LỖI 2: Sử dụng "import type" cho các interface
-import { getStudySet, type StudySetData } from "./studySetService";
-import { getCardsInStudySet, type CardData } from "./cardService";
-
+import { getStudySet } from "./studySetService";
+import { getCardsInStudySet, } from "./cardService";
+import type { StudySetData , CardData } from "@/@types/learning";
 // SỬA LỖI 1: Các hàm 'deleteAllCardsInStudySet' và 'deleteStudySet' đã bị xóa khỏi đây
 // vì logic của chúng được thực hiện trực tiếp trong 'writeBatch' để đảm bảo tính toàn vẹn.
 

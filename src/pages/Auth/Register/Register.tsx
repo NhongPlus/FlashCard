@@ -7,6 +7,7 @@ import style from './Register.module.css'
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "@/services/User/authService";
 import { useState } from "react";
+import { notifications } from "@mantine/notifications";
 export default function Register() {
   const [loading, setLoading] = useState(false);
   const form = useForm({
@@ -24,12 +25,33 @@ export default function Register() {
   });
   const navigate = useNavigate();
   const handleSubmit = async (values: typeof form.values) => {
-    setLoading(true)
+    setLoading(true);
+
     try {
       await register(values.email, values.password);
-      navigate("/dashboard"); // ✅ chuyển thẳng
-    } catch (err) {
-      console.error(err);
+      notifications.show({
+        title: 'Thành công',
+        message: 'Đăng ký thành công! Vui lòng hoàn thành hồ sơ.',
+        color: 'green',
+      });
+      navigate("/settings");
+    } catch (err : any) {
+      // ✅ Handle errors
+      let errorMessage = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email này đã được đăng ký.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'Mật khẩu quá yếu.';
+      } else if (err.message.includes('Không thể tạo hồ sơ')) {
+        errorMessage = err.message;
+      }
+
+      notifications.show({
+        title: 'Lỗi',
+        message: errorMessage,
+        color: 'red',
+      });
     } finally {
       setLoading(false);
     }

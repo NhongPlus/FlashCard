@@ -1,12 +1,13 @@
-// src/pages/AddCard/AddFlashCard.tsx - REFACTORED WITH MANTINE useForm
+// src/pages/AddCard/AddFlashCard.tsx - WITH PUBLIC/PRIVATE TOGGLE
 
 import { useState, useEffect } from 'react';
-import { Container, Title, Stack, Button, Group, Flex } from '@mantine/core';
+import { Container, Title, Stack, Button, Group, Flex, Switch, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { useNavigate, useParams } from 'react-router-dom';
+import { IconLock, IconWorld } from '@tabler/icons-react';
 
 import FlashcardItem from '@/components/CardItem/FlashcardItem';
 import { FormTextInput } from '@/components/Input/TextInput/TextInput';
@@ -24,14 +25,12 @@ import { notifications } from '@mantine/notifications';
 import { FormTextarea } from '@/components/Input/TextArea/TextArea';
 import { ButtonBase } from '@/components/Button/ButtonBase';
 
-// Kiểu dữ liệu
 type ClientCard = {
     id: string;
     frontCard: string;
     backCard: string;
 };
 
-// Constants
 const TITLE_MIN_LENGTH = 3;
 const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
@@ -44,11 +43,12 @@ function AddFlashCard() {
 
     const sensors = useSensors(useSensor(PointerSensor));
 
-    // ✅ Mantine useForm for title & description
+    // ✅ Form with isPublic field
     const form = useForm({
         initialValues: {
             title: '',
             description: '',
+            isPublic: true, // ← Default là public
         },
         validate: {
             title: (value) => {
@@ -64,22 +64,15 @@ function AddFlashCard() {
         },
     });
 
-    // Cards state
     const [cards, setCards] = useState<ClientCard[]>([
         { id: `new-${Date.now()}`, frontCard: '', backCard: '' },
     ]);
     const [originalCards, setOriginalCards] = useState<ClientCard[]>([]);
-
-    // UI state
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingData, setIsLoadingData] = useState(isEditMode);
 
-
-
-    // ✅ Effect để tải dữ liệu khi ở chế độ Edit - WITH FIX
     useEffect(() => {
         let isMounted = true;
-
         if (isEditMode && id) {
             const fetchDataForEdit = async () => {
                 try {
@@ -96,10 +89,10 @@ function AddFlashCard() {
                         throw new Error('Không tìm thấy bộ thẻ');
                     }
 
-                    // ✅ FIX: Fill form data đúng cách
                     form.setValues({
                         title: studySetData.title || '',
-                        description: studySetData.description || '', // ← Handle undefined
+                        description: studySetData.description || '',
+                        isPublic: studySetData.isPublic ?? true, // ← Load isPublic
                     });
 
                     const clientCards = cardsData.map(card => ({
@@ -109,14 +102,14 @@ function AddFlashCard() {
                     }));
 
                     setCards(clientCards);
-                    setOriginalCards(clientCards); // ✅ Lưu trạng thái gốc
+                    setOriginalCards(clientCards);
 
                 } catch (error) {
                     if (!isMounted) return;
-                    console.error("Lỗi khi tải dữ liệu để chỉnh sửa:", error);
+                    console.error("Lỗi khi tải dữ liệu:", error);
                     notifications.show({
                         title: 'Lỗi',
-                        message: 'Không tìm thấy bộ thẻ hoặc đã có lỗi xảy ra khi tải dữ liệu.',
+                        message: 'Không tìm thấy bộ thẻ.',
                         color: 'red',
                     });
                     navigate('/dashboard');
@@ -131,11 +124,11 @@ function AddFlashCard() {
             isMounted = false;
         };
     }, [isEditMode, id, navigate]);
-    // ✅ AUTHENTICATION CHECK - After all hooks
+
     if (userLoading) {
         return <LoadingScreen />;
     }
-    // --- Các hàm quản lý thẻ ---
+
     const handleAddCard = () => {
         setCards(prev => [
             ...prev,
@@ -180,7 +173,7 @@ function AddFlashCard() {
         if (validCards.length === 0) {
             notifications.show({
                 title: 'Lỗi',
-                message: 'Bạn phải điền ít nhất một thẻ hợp lệ (cả mặt trước và mặt sau).',
+                message: 'Bạn phải điền ít nhất một thẻ hợp lệ.',
                 color: 'red'
             });
             return false;
@@ -188,9 +181,7 @@ function AddFlashCard() {
         return true;
     };
 
-    // --- Hàm xử lý chính khi Submit Form ---
-    const handleSubmit = async (values: { title: string; description: string }) => {
-        // Validate form
+    const handleSubmit = async (values: { title: string; description: string; isPublic: boolean }) => {
         if (!form.isValid() || !validateCards()) {
             return;
         }
@@ -207,7 +198,7 @@ function AddFlashCard() {
             console.error("Lỗi khi lưu học phần:", error);
             notifications.show({
                 title: 'Lỗi',
-                message: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+                message: 'Đã có lỗi xảy ra.',
                 color: 'red'
             });
         } finally {
@@ -215,9 +206,7 @@ function AddFlashCard() {
         }
     };
 
-    // ✅ Edit Mode Logic
-    const handleEditMode = async (id: string, values: { title: string; description: string }) => {
-        // 1️⃣ Validate phải có ít nhất 1 thẻ hợp lệ
+    const handleEditMode = async (id: string, values: { title: string; description: string; isPublic: boolean }) => {
         const validCards = getValidCards();
         if (validCards.length === 0) {
             notifications.show({
@@ -230,12 +219,12 @@ function AddFlashCard() {
 
         const studySetUpdateData = {
             title: values.title.trim(),
-            description: values.description.trim() || ''
+            description: values.description.trim() || '',
+            isPublic: values.isPublic, // ← Include isPublic
         };
 
         const currentCardsMap = new Map(cards.map(c => [c.id, c]));
 
-        // 2️⃣ Cards cần tạo - CHỈ card không trống
         const cardsToCreate = cards
             .filter(c => c.id.startsWith('new-') && c.frontCard.trim() && c.backCard.trim())
             .map((card) => ({
@@ -245,12 +234,10 @@ function AddFlashCard() {
                 isMastered: false,
             }));
 
-        // 3️⃣ Cards cần xóa
         const cardIdsToDelete = originalCards
             .filter(c => !currentCardsMap.has(c.id))
             .map(c => c.id);
 
-        // 4️⃣ Cards cần update
         const cardsToUpdate = originalCards
             .filter(c => currentCardsMap.has(c.id))
             .map(originalCard => {
@@ -295,8 +282,7 @@ function AddFlashCard() {
         }, 500);
     };
 
-    // ✅ Create Mode Logic
-    const handleCreateMode = async (values: { title: string; description: string }) => {
+    const handleCreateMode = async (values: { title: string; description: string; isPublic: boolean }) => {
         const validCards = getValidCards();
 
         const studySetData = {
@@ -304,8 +290,9 @@ function AddFlashCard() {
             description: values.description.trim() || '',
             userId: user!.uid,
             folderId: null,
+            isPublic: values.isPublic, // ← Include isPublic
             language: { front: "en", back: "vi" },
-            settings: { isPublic: true, allowCopy: true, shuffleCards: false },
+            settings: { allowCopy: true, shuffleCards: false },
             tags: [],
             createdAt: new Date(),
         };
@@ -321,7 +308,9 @@ function AddFlashCard() {
 
         notifications.show({
             title: 'Thành công',
-            message: 'Đã tạo học phần mới!',
+            message: values.isPublic
+                ? 'Đã tạo học phần công khai!'
+                : 'Đã tạo học phần riêng tư!',
             color: 'green'
         });
 
@@ -360,9 +349,45 @@ function AddFlashCard() {
                             {...form.getInputProps('description')}
                             filled={false}
                             disabled={isLoadingData || isSubmitting}
-                            h={100} // chiều cao tùy ý
+                            h={100}
                             required={false}
                         />
+
+                        {/* ✅ PUBLIC/PRIVATE TOGGLE */}
+                        <Group
+                            justify="space-between"
+                            p="md"
+                            style={{
+                                backgroundColor: 'white',
+                                borderRadius: '10px',
+                                border: '1px solid #e9ecef'
+                            }}
+                        >
+                            <Group gap="xs">
+                                {form.values.isPublic ? (
+                                    <IconWorld size={20} color="#4dabf7" />
+                                ) : (
+                                    <IconLock size={20} color="#868e96" />
+                                )}
+                                <div>
+                                    <Text fw={500} size="sm">
+                                        {form.values.isPublic ? 'Công khai' : 'Riêng tư'}
+                                    </Text>
+                                    <Text size="xs" c="dimmed">
+                                        {form.values.isPublic
+                                            ? 'Mọi người có thể xem và tìm kiếm học phần này'
+                                            : 'Chỉ bạn mới có thể xem học phần này'
+                                        }
+                                    </Text>
+                                </div>
+                            </Group>
+                            <Switch
+                                checked={form.values.isPublic}
+                                onChange={(event) => form.setFieldValue('isPublic', event.currentTarget.checked)}
+                                size="md"
+                                disabled={isLoadingData || isSubmitting}
+                            />
+                        </Group>
                     </Flex>
 
                     <Stack my="xl" gap={40}>
@@ -389,24 +414,22 @@ function AddFlashCard() {
                             </SortableContext>
                         </DndContext>
                     </Stack>
-
-                    <Button
-                        fullWidth
-                        variant="light"
-                        mt="lg"
-                        onClick={handleAddCard}
-                        className={styles.addButton}
-                        disabled={isLoadingData || isSubmitting}
-                    >
-                        + THÊM THẺ
-                    </Button>
-
+                    <Group justify="flex-end" mt="xl">
+                        <Button
+                            variant="light"
+                            mt="lg"
+                            onClick={handleAddCard}
+                            className={styles.addButton}
+                            disabled={isLoadingData || isSubmitting}
+                        >
+                            + THÊM THẺ
+                        </Button>
+                    </Group>
                     <Group justify="flex-end" mt="xl">
                         <ButtonBase
                             label={isSubmitting ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Tạo')}
                             type="submit"
                             disabled={isSubmitting || isLoadingData}
-                            fullWidth
                             variant="filled"
                         />
                     </Group>

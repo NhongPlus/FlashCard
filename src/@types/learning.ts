@@ -16,8 +16,15 @@ export interface StudySetData {
   userId: string;
   folderId?: string | null;
   cardCount: number;
+  isPublic?: boolean; // ← Add
+  language?: { front: string; back: string }; // ← Add
+  settings?: { allowCopy?: boolean; shuffleCards?: boolean }; // ← Add
+  statistics?: { views?: number; copies?: number; learners?: number }; // ← Add
+  rating?: { average?: number; count?: number }; // ← Add
+  tags?: string[]; // ← Add
+  createdAt?: unknown;
+  updatedAt?: unknown;
 }
-
 export interface BasicModeState {
   viewedCardIds: Set<string>;
   isShuffled: boolean;

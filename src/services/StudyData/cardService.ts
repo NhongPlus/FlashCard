@@ -10,17 +10,8 @@ import {
   updateDoc
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
+import type { CardData } from "@/@types/learning";
 
-// Interface của bạn
-export interface CardData {
-  id: string;
-  studySetId: string;
-  front: string;
-  back: string;
-  order: number;
-  isMastered: boolean;
-  // Các trường khác...
-}
 
 /**
  * CREATE - Thêm một card mới vào study set và cập nhật cardCount

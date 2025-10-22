@@ -67,7 +67,7 @@ function App() {
       fetchSets();
     }
   }, [selectedFolder, opened, user?.uid]);
-  console.log(folders);
+
   const handleCloseModal = () => {
     close();
     // Reset state khi đóng modal để lần sau mở lại không bị hiển thị dữ liệu cũ
@@ -148,7 +148,7 @@ function App() {
                   onClick={() => handleFolderClick(folder)}
                 >
                   <Group>
-                    <ThemeIcon variant="light" radius="md" size="xl" color="#008EC4">
+                    <ThemeIcon variant="light" radius="md" size="xl" color="#FF7237">
                       <IconBook2 style={{ width: '70%', height: '70%' }} />
                     </ThemeIcon>
                     <Box style={{ flex: 1 }}>

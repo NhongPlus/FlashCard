@@ -1,0 +1,31 @@
+.inputCombobox {
+  background-color: #f6f7fb;
+  height: 46px;
+  padding-left: 40px;
+  border-radius: 10px;
+  border: none;
+  caret-color: rgb(255, 81, 58);
+}
+.inputCombobox:focus {
+  border: 2px solid #A8B1FF;
+}
+.inputCombobox::placeholder {
+  font-weight: 700;
+}
+.wrapperCombobox {
+  width: 400px;
+  height: 46px;
+}
+.sectionCombobox {
+  &[data-position="left"] {
+    margin: 0 5px;
+  }
+}
+.optionCombobox{
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+.viewport{
+  max-height: 190px;
+}

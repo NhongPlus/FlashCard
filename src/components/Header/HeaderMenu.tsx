@@ -7,6 +7,7 @@ import useAuth from '@/utils/hooks/useAuth';
 import useUserProfile from '@/utils/hooks/useUserProfile';
 import { logout } from '@/services/User/authService';
 import { notifications } from '@mantine/notifications';
+import SearchStudySet from '../Search/SearchStudySet';
 
 const NAVIGATION_LINKS = {
   authenticated: [
@@ -136,7 +137,8 @@ export function HeaderMenu() {
           <Link to={isAuthenticated ? "/dashboard" : "/about"} style={{ display: 'flex', alignItems: 'center' }}>
             <IconBrandFacebookFilled size={28} />
           </Link>
-
+          {/* Search enginer */}
+          <SearchStudySet />
           <Group gap={5} visibleFrom="sm">
             {renderNavItems()}
             {renderUserMenu()}
