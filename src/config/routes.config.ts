@@ -7,12 +7,18 @@ import Mission from "@/pages/Mission/Mission";
 import SettingAcount from "@/pages/Setting/Setting";
 import Learning from "@/pages/Learning/Learning";
 import FolderPage from "@/pages/Folder/FolderPage";
+import ExplorePage from "@/pages/Explore/ExplorePage";
 
 export const protectedRoutes = [
   {
     key: "dashboard",
     path: "/dashboard",
     component: App,
+  },
+  {
+    key: "explore",
+    path: "/explore",
+    component: ExplorePage,
   },
   {
     key: "settings",

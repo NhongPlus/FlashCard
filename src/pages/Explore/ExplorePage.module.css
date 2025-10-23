@@ -1,0 +1,11 @@
+.studySetCard {
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  background-color: white;
+  border-radius: var(--mantine-radius-md);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--mantine-shadow-md);
+  }
+}

@@ -1,4 +1,4 @@
-// src/components/SearchStudySet/SearchStudySet.tsx - FIXED
+// src/components/Search/SearchStudySet.tsx - FIXED WITH FULL FLOW
 
 import { CloseButton, Combobox, Highlight, ScrollArea, TextInput, useCombobox, Loader, Text, Group, Badge, UnstyledButton } from '@mantine/core';
 import { useEffect, useState } from 'react';
@@ -25,11 +25,14 @@ function SearchStudySet() {
     return () => clearTimeout(timer);
   }, [value, search]);
 
-  // ✅ Render options từ studySets
-  const options = studySets.map((studySet) => (
-    <Combobox.Option
-      value={studySet.id}
-      key={studySet.id}
+  // ✅ Giới hạn chỉ hiển thị 5 kết quả đầu tiên
+  const limitedStudySets = studySets.slice(0, 5);
+
+  // ✅ Render options (max 5 items)
+  const options = limitedStudySets.map((studySet) => (
+    <Combobox.Option 
+      value={studySet.id} 
+      key={studySet.id} 
       classNames={{ option: style.optionCombobox }}
     >
       <Group gap="xs" wrap="nowrap">
@@ -51,10 +54,26 @@ function SearchStudySet() {
     </Combobox.Option>
   ));
 
+  // ✅ Handle: Navigate đến trang explore với query
+  const goToExploreWithSearch = () => {
+    if (value.trim()) {
+      navigate(`/explore?q=${encodeURIComponent(value.trim())}`);
+      combobox.closeDropdown();
+    }
+  };
+
+  // ✅ Handle: Khi user ấn Enter
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      goToExploreWithSearch();
+    }
+  };
+
   return (
     <Combobox
       onOptionSubmit={(studySetId) => {
-        // ✅ Navigate đến trang learning khi chọn
+        // ✅ CASE 1: Click vào 1 study set → Navigate đến /learning
         navigate(`/learning/${studySetId}`);
         setValue('');
         combobox.closeDropdown();
@@ -87,44 +106,53 @@ function SearchStudySet() {
           onClick={() => combobox.openDropdown()}
           onFocus={() => combobox.openDropdown()}
           onBlur={() => {
+            // ✅ Delay để button "Tìm tất cả" có thể click được
             setTimeout(() => {
               combobox.closeDropdown();
-            }, 100);
+            }, 200);
           }}
+          onKeyDown={handleKeyDown} // ✅ CASE 2: Ấn Enter
         />
       </Combobox.Target>
 
       <Combobox.Dropdown>
-        <ScrollArea classNames={{ viewport: style.view }}>
+        <ScrollArea classNames={{ viewport: style.viewport }}>
           <Combobox.Options>
             {loading && value ? (
               <Combobox.Empty>
-                <Group justify="center">
+                <Group justify="center" p="md">
                   <Loader size="sm" />
                   <Text size="sm" c="dimmed">Đang tìm kiếm...</Text>
                 </Group>
               </Combobox.Empty>
             ) : options.length === 0 && value ? (
               <Combobox.Empty>
-                <Text size="sm" c="dimmed" ta="center">
+                <Text size="sm" c="dimmed" ta="center" p="md">
                   Không tìm thấy học phần nào với từ khóa "{value}"
                 </Text>
               </Combobox.Empty>
             ) : options.length === 0 ? (
               <Combobox.Empty>
-                <Text size="sm" c="dimmed" ta="center">
-                  Nhập từ khóa để tìm kiếm học phần
+                <Text size="sm" c="dimmed" ta="center" p="md">
+                  Nhập từ khóa để tìm kiếm học phần công khai
                 </Text>
               </Combobox.Empty>
             ) : (
-              options
-            )}
-
-            {/* Nút này sẽ chỉ hiển thị khi `value` không phải là chuỗi rỗng */}
-            {value && (
-              <UnstyledButton size="sx" c="dimmed" fw={600} m={5}>
-                Xem tất cả kết quả 
-              </UnstyledButton>
+              <>
+                {options}
+                
+                {/* ✅ CASE 3: Button "Tìm tất cả" ở dưới cùng */}
+                {value && studySets.length > 0 && (
+                  <UnstyledButton
+                    onClick={goToExploreWithSearch}
+                    className={style.viewAllButton}
+                  >
+                    <Text size="sm" c="blue" fw={600} ta="center" py="xs">
+                      Xem tất cả kết quả cho "{value}"
+                    </Text>
+                  </UnstyledButton>
+                )}
+              </>
             )}
           </Combobox.Options>
         </ScrollArea>
